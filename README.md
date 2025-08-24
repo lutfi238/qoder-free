@@ -66,11 +66,7 @@ chmod +x start_gui.sh
 ./start_gui.sh
 ```
 
-### 方法三：创建应用程序包
 
-```bash
-python3 create_app_bundle.py
-```
 
 ## 🚀 使用方法
 
@@ -195,9 +191,7 @@ python3 qoder_reset_gui.py
 qoder-free/
 ├── qoder_reset_gui.py          # 主程序文件（PyQt5界面）
 ├── start_gui.sh               # 启动脚本
-├── create_app_bundle.py       # 应用程序包创建脚本
-├── README.md                  # 完整说明文档
-└── manual_test_guide.md       # 手动测试指南
+└── README.md                  # 完整说明文档
 ```
 
 ### 核心技术
@@ -336,12 +330,13 @@ class QoderResetGUI(QMainWindow):
 
 ### 测试
 
-使用提供的测试指南进行功能测试：
+建议的测试步骤：
 
-```bash
-# 查看测试指南
-cat manual_test_guide.md
-```
+1. **启动测试**: 运行程序确保界面正常显示
+2. **功能测试**: 逐一测试各个按钮功能
+3. **状态检查**: 验证初始状态检查是否正确
+4. **重置测试**: 在测试环境中验证重置功能
+5. **日志验证**: 确认操作日志显示正确
 
 ## 📝 更新日志
 
@@ -409,18 +404,7 @@ python3 -c "import tkinter; print('tkinter 可用')"
 - 💬 **会话保留** - 可选择保留对话记录
 - 📝 **详细日志** - 实时显示操作进度和结果
 
-## 🔧 高级功能
 
-### 创建应用程序包
-
-```bash
-python3 create_app_bundle.py
-```
-
-这会创建一个标准的 macOS 应用程序包（`.app` 文件），可以：
-- 双击启动
-- 安装到应用程序文件夹
-- 从启动台启动
 
 ## 📋 重置内容
 
@@ -447,9 +431,9 @@ python3 create_app_bundle.py
 ### 常见问题
 
 1. **GUI窗口不显示**
-   - **推荐解决方案**：使用应用程序包方式启动
-   - 运行 `python3 create_app_bundle.py` 创建应用程序包
-   - 双击 `Qoder Reset Tool.app` 启动
+   - 确保已安装PyQt5：`pip3 install PyQt5`
+   - 尝试使用启动脚本：`./start_gui.sh`
+   - 检查终端是否有错误信息
 
 2. **"Qoder 正在运行"**
    - 完全关闭 Qoder 应用程序
@@ -467,21 +451,17 @@ python3 create_app_bundle.py
    - 查看日志了解详细信息
 
 6. **macOS GUI显示问题**
-   - 这是macOS上Python GUI应用的常见问题
-   - 使用应用程序包是最可靠的解决方案
-   - 或者检查Dock中的Python图标并点击激活
+   - 检查Dock中的Python图标并点击激活
+   - 确保终端有足够权限运行GUI应用
+   - 尝试在不同的终端应用中运行
 
 ## 📁 项目文件
 
 ```
 qoder-free/
-├── qoder_reset_gui.py      # 主程序
+├── qoder_reset_gui.py      # 主程序（PyQt5界面）
 ├── start_gui.sh           # 启动脚本
-├── create_app_bundle.py   # 应用包创建工具
-├── README.md              # 项目说明（本文件）
-├── GUI使用说明.md        # 详细使用指南
-├── 使用指南.md           # 完整操作流程
-└── 项目说明.md           # 技术细节
+└── README.md              # 完整说明文档
 ```
 
 ## ⚠️ 重要提醒
@@ -493,31 +473,20 @@ qoder-free/
 
 ## 🎉 开始使用
 
-### 推荐方式（解决GUI显示问题）：
-
-1. **创建应用程序包**：
-   ```bash
-   python3 create_app_bundle.py
-   ```
-
-2. **启动应用程序**：
-   - 双击 `Qoder Reset Tool.app`
-   - 或从启动台启动
-
-### 备选方式：
+### 推荐启动方式：
 
 ```bash
+# 使用启动脚本（推荐）
 ./start_gui.sh
+
+# 或直接运行
+python3 qoder_reset_gui.py
 ```
 
 享受全新的 Qoder 使用体验！
 
 ---
 
-**注意**：如果直接运行Python脚本时GUI窗口不显示，这是macOS上的常见问题。使用应用程序包方式可以完美解决这个问题。
-
----
-
 **版本**: 1.0  
-**开发**: AI Assistant  
+**开发**: Mr.T
 **支持**: macOS
