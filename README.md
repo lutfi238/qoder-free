@@ -24,12 +24,46 @@
 - � **重置机器ID** - 生成全新的机器标识符
 - 📊 **重置遥测数据** - 重置应用程序的遥测和设备ID
 - 🧹 **智能缓存清理** - 清理应用缓存但保护重要数据
+- 🔥 **深度身份清理** - 清除所有网络状态、Cookie和本地存储（新增）
 - 💬 **对话记录管理** - 可选择保留或清除聊天历史记录
 - 🖥️ **现代化界面** - 基于PyQt5的美观图形界面
 - 📝 **实时日志** - 详细的操作日志和状态监控
 - 🔍 **状态检测** - 自动检测Qoder运行状态和数据完整性
 - ⚡ **一键操作** - 支持一键完成所有重置操作
 - 🛡️ **安全保护** - 操作前确认，防止误操作
+- 🎯 **强化清理** - 清理SharedClientCache、网络指纹等深层身份信息
+
+### 🔍 深度身份识别清理
+
+**为什么需要深度清理？**
+基础重置工具只处理了基本的身份文件，但遗漏了以下关键身份识别信息：
+
+#### 1. 网络层身份信息
+- **Network Persistent State** - 网络服务器连接历史和网络指纹
+- **Cookies & Cookies-journal** - 浏览器 Cookie 数据库
+- **TransportSecurity** - 传输安全状态，包含 HSTS 等信息
+
+#### 2. 本地存储身份信息
+- **Local Storage/leveldb** - 本地存储数据库
+- **SharedStorage & SharedStorage-wal** - 共享存储数据
+- **WebStorage** - Web 存储数据
+- **Session Storage** - 会话存储数据
+
+#### 3. 系统级身份信息
+- **SharedClientCache/.info** - 语言服务器信息文件
+- **SharedClientCache/mcp.json** - MCP 配置文件
+- **SharedClientCache/index/** - 索引数据目录
+- **SharedClientCache/cache/** - 共享缓存数据
+
+#### 4. 其他潜在识别信息
+- **Trust Tokens & Trust Tokens-journal** - 信任令牌
+- **Preferences** - 用户偏好设置
+- **Shared Dictionary** - 共享字典
+- **Service Worker** - 服务工作线程数据
+- **Crashpad** - 崩溃报告（可能包含设备信息）
+- **languagepacks.json** - 语言包配置
+- **code.lock** - 代码锁文件
+- ***.sock** - Socket 文件
 
 ## �️ 系统要求
 
@@ -340,7 +374,17 @@ class QoderResetGUI(QMainWindow):
 
 ## 📝 更新日志
 
-### v2.0.0 (最新版本)
+### v2.1.0 - 身份识别修复版本 (最新版本)
+- ✨ 新增深度身份清理功能
+- 🔧 修复遗漏的关键身份识别文件
+- 📈 增强状态检查功能
+- 🎨 改进界面布局（2x2 按钮布局）
+- 📋 完善日志输出和用户反馈
+- 🔍 清除 Network Persistent State、Cookies、SharedStorage 等身份文件
+- 🛠️ 清理 SharedClientCache 内部关键文件（.info, mcp.json 等）
+- 🧹 清除崩溃报告、Socket 文件等其他身份信息
+
+### v2.0.0
 - ✨ 全新PyQt5界面，替代tkinter
 - 🔧 修复对话框文字不可见问题
 - 📝 添加自动滚动日志显示
@@ -446,11 +490,21 @@ python3 -c "import tkinter; print('tkinter 可用')"
 4. **"tkinter 不可用"**
    - 安装 python-tk: `brew install python-tk`
 
-5. **重置后仍被识别**
-   - 确认所有相关文件都被清理
-   - 查看日志了解详细信息
+5. **重置后仍被识别为老用户**
+   - 使用“深度身份清理”功能清除所有遗漏的身份识别信息
+   - 取消勾选“保留对话记录”以获得最彻底的清理
+   - 检查日志确认所有身份文件都被清理
+   - 考虑更换网络环境或使用 VPN
 
-6. **macOS GUI显示问题**
+6. **网络指纹问题**
+   ```bash
+   # 清理系统级 DNS 缓存
+   sudo dscacheutil -flushcache
+   
+   # 重置网络设置可能有助于清除网络指纹
+   ```
+
+7. **macOS GUI显示问题**
    - 检查Dock中的Python图标并点击激活
    - 确保终端有足够权限运行GUI应用
    - 尝试在不同的终端应用中运行

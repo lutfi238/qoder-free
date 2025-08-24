@@ -32,7 +32,7 @@ class QoderResetGUI(QMainWindow):
     def init_ui(self):
         """初始化用户界面"""
         self.setWindowTitle("Qoder-Free")
-        self.setFixedSize(800, 700)
+        self.setFixedSize(800, 1000)
         self.setStyleSheet("background-color: white;")
         
         # 创建中央部件
@@ -82,8 +82,8 @@ class QoderResetGUI(QMainWindow):
         main_layout.addWidget(operation_title)
         
         # 4. 蓝色横幅按钮
-        self.one_click_btn = QPushButton("一键修改所有配置")
-        self.one_click_btn.setFixedHeight(50)
+        self.one_click_btn = QPushButton("一键修改配置")
+        self.one_click_btn.setFixedSize(300, 40)  # 设置固定宽度300px，高度40px
         self.one_click_btn.setStyleSheet("""
             QPushButton {
                 background-color: #4285f4;
@@ -101,11 +101,20 @@ class QoderResetGUI(QMainWindow):
             }
         """)
         self.one_click_btn.clicked.connect(self.one_click_reset)
-        main_layout.addWidget(self.one_click_btn)
         
-        # 5. 三个操作按钮
-        button_layout = QHBoxLayout()
-        button_layout.setSpacing(20)
+        # 将按钮居中显示
+        button_center_layout = QHBoxLayout()
+        button_center_layout.addStretch()
+        button_center_layout.addWidget(self.one_click_btn)
+        button_center_layout.addStretch()
+        main_layout.addLayout(button_center_layout)
+        
+        # 5. 四个操作按钮（扩展为2x2布局）
+        button_layout = QVBoxLayout()
+        
+        # 第一行按钮
+        button_row1 = QHBoxLayout()
+        button_row1.setSpacing(15)
         
         # 关闭Qoder按钮 (红色)
         self.close_qoder_btn = QPushButton("关闭Qoder")
@@ -127,7 +136,7 @@ class QoderResetGUI(QMainWindow):
             }
         """)
         self.close_qoder_btn.clicked.connect(self.close_qoder)
-        button_layout.addWidget(self.close_qoder_btn)
+        button_row1.addWidget(self.close_qoder_btn)
         
         # 重置机器ID按钮 (蓝色)
         self.reset_machine_id_btn = QPushButton("重置机器ID")
@@ -149,7 +158,13 @@ class QoderResetGUI(QMainWindow):
             }
         """)
         self.reset_machine_id_btn.clicked.connect(self.reset_machine_id)
-        button_layout.addWidget(self.reset_machine_id_btn)
+        button_row1.addWidget(self.reset_machine_id_btn)
+        
+        button_layout.addLayout(button_row1)
+        
+        # 第二行按钮
+        button_row2 = QHBoxLayout()
+        button_row2.setSpacing(15)
         
         # 重置遥测数据按钮 (蓝色)
         self.reset_telemetry_btn = QPushButton("重置遥测数据")
@@ -171,8 +186,31 @@ class QoderResetGUI(QMainWindow):
             }
         """)
         self.reset_telemetry_btn.clicked.connect(self.reset_telemetry)
-        button_layout.addWidget(self.reset_telemetry_btn)
+        button_row2.addWidget(self.reset_telemetry_btn)
         
+        # 深度身份清理按钮 (橙色，新增)
+        self.deep_clean_btn = QPushButton("深度身份清理")
+        self.deep_clean_btn.setFixedSize(150, 40)
+        self.deep_clean_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #ff9800;
+                color: white;
+                font-size: 12px;
+                font-weight: bold;
+                border: none;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #f57c00;
+            }
+            QPushButton:pressed {
+                background-color: #e65100;
+            }
+        """)
+        self.deep_clean_btn.clicked.connect(self.deep_identity_cleanup)
+        button_row2.addWidget(self.deep_clean_btn)
+        
+        button_layout.addLayout(button_row2)
         main_layout.addLayout(button_layout)
 
         # 5.5. 保留对话记录勾选框
@@ -222,6 +260,7 @@ class QoderResetGUI(QMainWindow):
         
         # 日志文本框
         self.log_text = QTextEdit()
+        self.log_text.setFixedHeight(380)  # 设置固定高度以显示更多日志行
         self.log_text.setStyleSheet("""
             QTextEdit {
                 background-color: #f8f9fa;
@@ -395,6 +434,39 @@ class QoderResetGUI(QMainWindow):
                         chat_count += 1
 
                 self.log(f"   ✅ 发现 {chat_count}/{len(chat_dirs)} 个对话相关目录")
+                
+                # 7. 检查身份识别文件（新增）
+                self.log("7. 检查身份识别文件...")
+                identity_files = [
+                    "Network Persistent State", "Cookies", "SharedStorage", 
+                    "Trust Tokens", "TransportSecurity", "Preferences"
+                ]
+                
+                identity_count = 0
+                for identity_file in identity_files:
+                    file_path = qoder_support_dir / identity_file
+                    if file_path.exists():
+                        identity_count += 1
+                
+                self.log(f"   ✅ 发现 {identity_count}/{len(identity_files)} 个身份识别文件")
+                
+                # 8. 检查 SharedClientCache 内部文件
+                self.log("8. 检查 SharedClientCache 内部文件...")
+                shared_cache = qoder_support_dir / "SharedClientCache"
+                if shared_cache.exists():
+                    critical_files = [".info", ".lock", "mcp.json"]
+                    shared_count = 0
+                    for file_name in critical_files:
+                        if (shared_cache / file_name).exists():
+                            shared_count += 1
+                    
+                    # 检查 index 目录
+                    if (shared_cache / "index").exists():
+                        shared_count += 1
+                    
+                    self.log(f"   ✅ SharedClientCache 内部文件: {shared_count}/4 个")
+                else:
+                    self.log("   ⚠️  SharedClientCache 目录不存在")
 
             else:
                 self.log("   ❌ Qoder目录不存在")
@@ -436,6 +508,67 @@ class QoderResetGUI(QMainWindow):
         else:
             self.log("Qoder 未运行")
             QMessageBox.information(self, "状态检查", "Qoder 当前未运行")
+
+    def deep_identity_cleanup(self):
+        """深度身份清理功能"""
+        self.log("开始深度身份清理...")
+
+        # 检查Qoder是否在运行
+        is_running, pids = self.check_qoder_running()
+        if is_running:
+            reply = QMessageBox.question(self, "检测到 Qoder 正在运行",
+                                       f"检测到 Qoder 正在运行 (PID: {', '.join(pids)})\n\n"
+                                       "深度清理需要先关闭 Qoder。\n"
+                                       "请手动关闭后点击'Yes'继续。",
+                                       QMessageBox.Yes | QMessageBox.No)
+            if reply != QMessageBox.Yes:
+                self.log("用户取消操作")
+                return
+
+            # 再次检查
+            is_running, _ = self.check_qoder_running()
+            if is_running:
+                self.log("Qoder 仍在运行，操作取消")
+                QMessageBox.critical(self, "错误", "请先完全关闭 Qoder 应用程序")
+                return
+
+        # 确认操作
+        reply = QMessageBox.question(self, "确认深度清理",
+                                   f"深度身份清理将：\n\n"
+                                   f"• 清除所有网络状态和 Cookie\n"
+                                   f"• 清除所有本地存储数据\n"
+                                   f"• 清除 SharedClientCache 内部文件\n"
+                                   f"• 清除系统级别身份文件\n"
+                                   f"• 清除崩溃报告和缓存数据\n\n"
+                                   f"这是最强力的身份重置，确定继续吗？",
+                                   QMessageBox.Yes | QMessageBox.No)
+        if reply != QMessageBox.Yes:
+            self.log("用户取消深度清理")
+            return
+
+        try:
+            home_dir = Path.home()
+            qoder_support_dir = home_dir / "Library/Application Support/Qoder"
+            
+            if not qoder_support_dir.exists():
+                raise Exception("未找到 Qoder 应用数据目录")
+            
+            self.log("=" * 40)
+            self.log("开始深度身份清理")
+            self.log("=" * 40)
+            
+            # 执行高级身份清理
+            self.perform_advanced_identity_cleanup(qoder_support_dir)
+            
+            self.log("=" * 40)
+            self.log("深度身份清理完成！")
+            self.log("=" * 40)
+            
+            QMessageBox.information(self, "完成", "深度身份清理完成！\n现在可以重新启动 Qoder。")
+            
+        except Exception as e:
+            self.log(f"深度清理失败: {e}")
+            QMessageBox.critical(self, "错误", f"深度清理失败: {e}")
 
     def reset_machine_id(self):
         """重置机器ID"""
@@ -544,8 +677,10 @@ class QoderResetGUI(QMainWindow):
                                    f"• 重置机器ID\n"
                                    f"• 重置遥测数据\n"
                                    f"• 清理缓存数据\n"
+                                   f"• 清理身份识别文件 (Cookies, 网络状态等)\n"
+                                   f"• 执行高级身份清理 (SharedClientCache 等)\n"
                                    f"• {chat_action}\n\n"
-                                   f"确定继续吗？",
+                                   f"这是最全面的重置方案，确定继续吗？",
                                    QMessageBox.Yes | QMessageBox.No)
         if reply != QMessageBox.Yes:
             self.log("用户取消一键修改")
@@ -624,14 +759,157 @@ class QoderResetGUI(QMainWindow):
                     pass
 
         self.log(f"   已清理 {cleaned} 个缓存目录")
+        
+        # 4. 清理身份识别文件（新增）
+        self.log("4. 清理身份识别文件...")
+        identity_files = [
+            "Network Persistent State",
+            "Cookies", "Cookies-journal",
+            "SharedStorage", "SharedStorage-wal",
+            "Trust Tokens", "Trust Tokens-journal",
+            "TransportSecurity",
+            "Preferences"
+        ]
+        
+        identity_cleaned = 0
+        for identity_file in identity_files:
+            file_path = qoder_support_dir / identity_file
+            if file_path.exists():
+                try:
+                    file_path.unlink()
+                    self.log(f"   已清除: {identity_file}")
+                    identity_cleaned += 1
+                except Exception as e:
+                    self.log(f"   清除失败 {identity_file}: {e}")
+        
+        # 5. 清理存储目录
+        storage_dirs = [
+            "Local Storage",
+            "Session Storage", 
+            "WebStorage",
+            "Shared Dictionary",
+            "Service Worker"
+        ]
+        
+        for storage_dir in storage_dirs:
+            storage_path = qoder_support_dir / storage_dir
+            if storage_path.exists():
+                try:
+                    shutil.rmtree(storage_path)
+                    self.log(f"   已清除: {storage_dir}")
+                    identity_cleaned += 1
+                except Exception as e:
+                    self.log(f"   清除失败 {storage_dir}: {e}")
+        
+        self.log(f"   已清理 {identity_cleaned} 个身份识别文件/目录")
+        
+        # 5. 执行高级身份清理（新增）
+        self.log("5. 执行高级身份清理...")
+        self.perform_advanced_identity_cleanup(qoder_support_dir)
 
-        # 4. 处理对话记录
+        # 6. 处理对话记录
         if preserve_chat:
-            self.log("4. 保留对话记录...")
+            self.log("6. 保留对话记录...")
             self.log("   对话记录已保留")
         else:
-            self.log("4. 清除对话记录...")
+            self.log("6. 清除对话记录...")
             self.clear_chat_history(qoder_support_dir)
+
+    def perform_advanced_identity_cleanup(self, qoder_support_dir):
+        """执行高级身份清理，清除所有可能的身份识别信息"""
+        try:
+            self.log("开始高级身份清理...")
+            cleaned_count = 0
+            
+            # 1. 清理 SharedClientCache 内部文件
+            shared_cache = qoder_support_dir / "SharedClientCache"
+            if shared_cache.exists():
+                # 保留目录结构，但清除关键文件
+                critical_files = [".info", ".lock", "mcp.json"]
+                for file_name in critical_files:
+                    file_path = shared_cache / file_name
+                    if file_path.exists():
+                        try:
+                            file_path.unlink()
+                            self.log(f"   已清除: SharedClientCache/{file_name}")
+                            cleaned_count += 1
+                        except Exception as e:
+                            self.log(f"   清除失败 {file_name}: {e}")
+                
+                # 清理 index 目录（包含索引数据）
+                index_dir = shared_cache / "index"
+                if index_dir.exists():
+                    try:
+                        shutil.rmtree(index_dir)
+                        self.log("   已清除: SharedClientCache/index")
+                        cleaned_count += 1
+                    except Exception as e:
+                        self.log(f"   清除失败 index: {e}")
+                
+                # 清理 cache 目录
+                cache_dir = shared_cache / "cache"
+                if cache_dir.exists():
+                    try:
+                        shutil.rmtree(cache_dir)
+                        self.log("   已清除: SharedClientCache/cache")
+                        cleaned_count += 1
+                    except Exception as e:
+                        self.log(f"   清除失败 cache: {e}")
+            
+            # 2. 清理系统级别的身份文件
+            system_files = [
+                "code.lock",
+                "languagepacks.json"
+            ]
+            
+            for sys_file in system_files:
+                file_path = qoder_support_dir / sys_file
+                if file_path.exists():
+                    try:
+                        file_path.unlink()
+                        self.log(f"   已清除: {sys_file}")
+                        cleaned_count += 1
+                    except Exception as e:
+                        self.log(f"   清除失败 {sys_file}: {e}")
+            
+            # 3. 清理崩溃报告目录（可能包含设备信息）
+            crashpad_dir = qoder_support_dir / "Crashpad"
+            if crashpad_dir.exists():
+                try:
+                    shutil.rmtree(crashpad_dir)
+                    self.log("   已清除: Crashpad")
+                    cleaned_count += 1
+                except Exception as e:
+                    self.log(f"   清除失败 Crashpad: {e}")
+            
+            # 4. 清理缓存目录（CachedData和 CachedProfilesData）
+            cached_dirs = ["CachedData", "CachedProfilesData"]
+            for cached_dir in cached_dirs:
+                dir_path = qoder_support_dir / cached_dir
+                if dir_path.exists():
+                    try:
+                        shutil.rmtree(dir_path)
+                        self.log(f"   已清除: {cached_dir}")
+                        cleaned_count += 1
+                    except Exception as e:
+                        self.log(f"   清除失败 {cached_dir}: {e}")
+            
+            # 5. 清理 socket 文件
+            import glob
+            socket_pattern = str(qoder_support_dir / "*.sock")
+            socket_files = glob.glob(socket_pattern)
+            for socket_file in socket_files:
+                try:
+                    Path(socket_file).unlink()
+                    self.log(f"   已清除: {Path(socket_file).name}")
+                    cleaned_count += 1
+                except Exception as e:
+                    self.log(f"   清除失败 {Path(socket_file).name}: {e}")
+            
+            self.log(f"   高级身份清理完成，处理了 {cleaned_count} 个项目")
+            
+        except Exception as e:
+            self.log(f"   高级身份清理失败: {e}")
 
     def clear_chat_history(self, qoder_support_dir):
         """清除对话记录"""
