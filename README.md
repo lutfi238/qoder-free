@@ -488,5 +488,5 @@ python3 qoder_reset_gui.py
 ---
 
 **版本**: 1.0  
-**开发**: Mr.T
+**开发**: [Mr.T](http://www.74110.net) 
 **支持**: macOS
