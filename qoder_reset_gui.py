@@ -210,7 +210,49 @@ class QoderResetGUI(QMainWindow):
         self.deep_clean_btn.clicked.connect(self.deep_identity_cleanup)
         button_row2.addWidget(self.deep_clean_btn)
         
-        button_layout.addLayout(button_row2)
+        # 第三行按钮（新增）
+        button_row3 = QHBoxLayout()
+        button_row3.setSpacing(15)
+        
+        # 清理登录身份按钮 (紫色，新增)
+        self.login_clean_btn = QPushButton("清理登录身份")
+        self.login_clean_btn.setFixedSize(150, 40)
+        self.login_clean_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #673ab7;
+                color: white;
+                font-size: 12px;
+                font-weight: bold;
+                border: none;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #5e35b1;
+            }
+            QPushButton:pressed {
+                background-color: #512da8;
+            }
+        """)
+        self.login_clean_btn.clicked.connect(self.login_identity_cleanup)
+        button_row3.addWidget(self.login_clean_btn)
+        
+        # 占位按钮（保持布局均衡）
+        placeholder_btn = QPushButton("高级选项")
+        placeholder_btn.setFixedSize(150, 40)
+        placeholder_btn.setEnabled(False)
+        placeholder_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #e0e0e0;
+                color: #9e9e9e;
+                font-size: 12px;
+                font-weight: bold;
+                border: none;
+                border-radius: 5px;
+            }
+        """)
+        button_row3.addWidget(placeholder_btn)
+        
+        button_layout.addLayout(button_row3)
         main_layout.addLayout(button_layout)
 
         # 5.5. 保留对话记录勾选框
@@ -467,6 +509,53 @@ class QoderResetGUI(QMainWindow):
                     self.log(f"   ✅ SharedClientCache 内部文件: {shared_count}/4 个")
                 else:
                     self.log("   ⚠️  SharedClientCache 目录不存在")
+                
+                # 9. 检查 Keychain 和证书存储（新增）
+                self.log("9. 检查 Keychain 和证书存储...")
+                keychain_files = [
+                    "cert_transparency_reporter_state.json",
+                    "Certificate Revocation Lists",
+                    "SSLCertificates"
+                ]
+                
+                keychain_count = 0
+                for keychain_file in keychain_files:
+                    file_path = qoder_support_dir / keychain_file
+                    if file_path.exists():
+                        keychain_count += 1
+                
+                self.log(f"   ✅ 发现 {keychain_count}/{len(keychain_files)} 个证书/安全文件")
+                
+                # 10. 检查用户活动记录（新增）
+                self.log("10. 检查用户活动记录...")
+                activity_files = [
+                    "ActivityLog", "EventLog", "UserActivityLog",
+                    "Login Credentials", "Web Data", "Web Data-journal"
+                ]
+                
+                activity_count = 0
+                for activity_file in activity_files:
+                    file_path = qoder_support_dir / activity_file
+                    if file_path.exists():
+                        activity_count += 1
+                
+                self.log(f"   ✅ 发现 {activity_count}/{len(activity_files)} 个活动记录文件")
+                
+                # 11. 检查设备指纹相关文件（新增）
+                self.log("11. 检查设备指纹相关文件...")
+                fingerprint_files = [
+                    "DeviceMetadata", "HardwareInfo", "SystemInfo",
+                    "QuotaManager", "QuotaManager-journal",
+                    "databases/Databases.db", "databases/Databases.db-journal"
+                ]
+                
+                fingerprint_count = 0
+                for fingerprint_file in fingerprint_files:
+                    file_path = qoder_support_dir / fingerprint_file
+                    if file_path.exists():
+                        fingerprint_count += 1
+                
+                self.log(f"   ✅ 发现 {fingerprint_count}/{len(fingerprint_files)} 个设备指纹文件")
 
             else:
                 self.log("   ❌ Qoder目录不存在")
@@ -508,6 +597,201 @@ class QoderResetGUI(QMainWindow):
         else:
             self.log("Qoder 未运行")
             QMessageBox.information(self, "状态检查", "Qoder 当前未运行")
+
+    def login_identity_cleanup(self):
+        """专门清理登录相关身份信息"""
+        self.log("开始清理登录相关身份信息...")
+
+        # 检查Qoder是否在运行
+        is_running, pids = self.check_qoder_running()
+        if is_running:
+            reply = QMessageBox.question(self, "检测到 Qoder 正在运行",
+                                       f"检测到 Qoder 正在运行 (PID: {', '.join(pids)})\n\n"
+                                       "登录身份清理需要先关闭 Qoder。\n"
+                                       "请手动关闭后点击'Yes'继续。",
+                                       QMessageBox.Yes | QMessageBox.No)
+            if reply != QMessageBox.Yes:
+                self.log("用户取消操作")
+                return
+
+            # 再次检查
+            is_running, _ = self.check_qoder_running()
+            if is_running:
+                self.log("Qoder 仍在运行，操作取消")
+                QMessageBox.critical(self, "错误", "请先完全关闭 Qoder 应用程序")
+                return
+
+        # 确认操作
+        reply = QMessageBox.question(self, "确认清理登录身份",
+                                   f"登录身份清理将：\n\n"
+                                   f"• 清除所有登录证书和 Cookies\n"
+                                   f"• 清除 SharedClientCache 登录状态\n"
+                                   f"• 清除网络状态和会话存储\n"
+                                   f"• 清除设备认证信息\n"
+                                   f"• 清除 nonce 和 challenge 相关数据\n\n"
+                                   f"这将使 Qoder 无法识别之前的登录状态，确定继续吗？",
+                                   QMessageBox.Yes | QMessageBox.No)
+        if reply != QMessageBox.Yes:
+            self.log("用户取消登录身份清理")
+            return
+
+        try:
+            home_dir = Path.home()
+            qoder_support_dir = home_dir / "Library/Application Support/Qoder"
+            
+            if not qoder_support_dir.exists():
+                raise Exception("未找到 Qoder 应用数据目录")
+            
+            self.log("=" * 40)
+            self.log("开始登录身份清理")
+            self.log("=" * 40)
+            
+            # 执行登录身份清理
+            self.perform_login_identity_cleanup(qoder_support_dir)
+            
+            self.log("=" * 40)
+            self.log("登录身份清理完成！")
+            self.log("=" * 40)
+            
+            QMessageBox.information(self, "完成", "登录身份清理完成！\n现在可以重新启动 Qoder。")
+            
+        except Exception as e:
+            self.log(f"登录身份清理失败: {e}")
+            QMessageBox.critical(self, "错误", f"登录身份清理失败: {e}")
+    
+    def perform_login_identity_cleanup(self, qoder_support_dir):
+        """执行登录相关身份清理"""
+        try:
+            self.log("开始清理登录相关身份信息...")
+            cleaned_count = 0
+            
+            # 1. 清理 SharedClientCache 中的登录状态文件
+            self.log("1. 清理 SharedClientCache 登录状态...")
+            shared_cache = qoder_support_dir / "SharedClientCache"
+            if shared_cache.exists():
+                # 清理关键的登录相关文件
+                login_files = [".info", ".lock", "mcp.json", "server.json", "auth.json"]
+                for file_name in login_files:
+                    file_path = shared_cache / file_name
+                    if file_path.exists():
+                        try:
+                            file_path.unlink()
+                            self.log(f"   已清除: SharedClientCache/{file_name}")
+                            cleaned_count += 1
+                        except Exception as e:
+                            self.log(f"   清除失败 {file_name}: {e}")
+                
+                # 清理所有临时文件
+                import glob
+                temp_pattern = str(shared_cache / "tmp*")
+                temp_files = glob.glob(temp_pattern)
+                for temp_file in temp_files:
+                    try:
+                        Path(temp_file).unlink()
+                        self.log(f"   已清除: {Path(temp_file).name}")
+                        cleaned_count += 1
+                    except Exception as e:
+                        self.log(f"   清除失败 {Path(temp_file).name}: {e}")
+            
+            # 2. 清理登录证书和认证文件
+            self.log("2. 清理登录证书和认证文件...")
+            auth_files = [
+                "Login Credentials", "Login Data", "Login Data-journal",
+                "Cookies", "Cookies-journal",
+                "Network Persistent State",
+                "cert_transparency_reporter_state.json",
+                "TransportSecurity",
+                "Trust Tokens", "Trust Tokens-journal"
+            ]
+            
+            for auth_file in auth_files:
+                file_path = qoder_support_dir / auth_file
+                if file_path.exists():
+                    try:
+                        file_path.unlink()
+                        self.log(f"   已清除: {auth_file}")
+                        cleaned_count += 1
+                    except Exception as e:
+                        self.log(f"   清除失败 {auth_file}: {e}")
+            
+            # 3. 清理会话和状态存储
+            self.log("3. 清理会话和状态存储...")
+            session_dirs = [
+                "Session Storage",
+                "Local Storage",
+                "WebStorage",
+                "SharedStorage",
+                "Shared Dictionary"
+            ]
+            
+            for session_dir in session_dirs:
+                dir_path = qoder_support_dir / session_dir
+                if dir_path.exists():
+                    try:
+                        shutil.rmtree(dir_path)
+                        self.log(f"   已清除: {session_dir}")
+                        cleaned_count += 1
+                    except Exception as e:
+                        self.log(f"   清除失败 {session_dir}: {e}")
+            
+            # 4. 清理用户配置中的登录相关信息
+            self.log("4. 清理用户配置中的登录信息...")
+            storage_json_file = qoder_support_dir / "User/globalStorage/storage.json"
+            if storage_json_file.exists():
+                try:
+                    with open(storage_json_file, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                    
+                    # 清除登录相关的配置键
+                    login_keys = []
+                    for key in data.keys():
+                        if any(keyword in key.lower() for keyword in [
+                            'login', 'auth', 'token', 'credential', 'session',
+                            'nonce', 'challenge', 'device', 'account', 'user'
+                        ]):
+                            login_keys.append(key)
+                    
+                    if login_keys:
+                        for key in login_keys:
+                            del data[key]
+                            self.log(f"   已清除配置: {key}")
+                        
+                        with open(storage_json_file, 'w', encoding='utf-8') as f:
+                            json.dump(data, f, indent=4, ensure_ascii=False)
+                        
+                        cleaned_count += len(login_keys)
+                        self.log(f"   已清除 {len(login_keys)} 个登录相关配置")
+                    else:
+                        self.log("   未找到登录相关配置")
+                
+                except Exception as e:
+                    self.log(f"   清理用户配置失败: {e}")
+            
+            # 5. 清理设备指纹和认证数据
+            self.log("5. 清理设备指纹和认证数据...")
+            device_files = [
+                "DeviceMetadata", "HardwareInfo", "SystemInfo",
+                "origin_bound_certs", "AutofillStrikeDatabase",
+                "AutofillStrikeDatabase-journal", "Feature Engagement Tracker"
+            ]
+            
+            for device_file in device_files:
+                file_path = qoder_support_dir / device_file
+                if file_path.exists():
+                    try:
+                        if file_path.is_dir():
+                            shutil.rmtree(file_path)
+                        else:
+                            file_path.unlink()
+                        self.log(f"   已清除: {device_file}")
+                        cleaned_count += 1
+                    except Exception as e:
+                        self.log(f"   清除失败 {device_file}: {e}")
+            
+            self.log(f"   登录身份清理完成，处理了 {cleaned_count} 个项目")
+            
+        except Exception as e:
+            self.log(f"   登录身份清理失败: {e}")
 
     def deep_identity_cleanup(self):
         """深度身份清理功能"""
@@ -768,7 +1052,10 @@ class QoderResetGUI(QMainWindow):
             "SharedStorage", "SharedStorage-wal",
             "Trust Tokens", "Trust Tokens-journal",
             "TransportSecurity",
-            "Preferences"
+            "Preferences",
+            "Login Credentials",
+            "Web Data", "Web Data-journal",
+            "cert_transparency_reporter_state.json"
         ]
         
         identity_cleaned = 0
@@ -788,7 +1075,10 @@ class QoderResetGUI(QMainWindow):
             "Session Storage", 
             "WebStorage",
             "Shared Dictionary",
-            "Service Worker"
+            "Service Worker",
+            "Certificate Revocation Lists",
+            "SSLCertificates",
+            "databases"
         ]
         
         for storage_dir in storage_dirs:
@@ -905,6 +1195,61 @@ class QoderResetGUI(QMainWindow):
                     cleaned_count += 1
                 except Exception as e:
                     self.log(f"   清除失败 {Path(socket_file).name}: {e}")
+            
+            # 6. 清理设备指纹和活动记录文件（新增）
+            fingerprint_and_activity_files = [
+                "DeviceMetadata", "HardwareInfo", "SystemInfo",
+                "QuotaManager", "QuotaManager-journal",
+                "ActivityLog", "EventLog", "UserActivityLog",
+                "origin_bound_certs", "Network Action Predictor",
+                "AutofillStrikeDatabase", "AutofillStrikeDatabase-journal",
+                "Feature Engagement Tracker", "PasswordStoreDefault",
+                "PreferredApps", "UserPrefs", "UserPrefs.backup"
+            ]
+            
+            for file_name in fingerprint_and_activity_files:
+                file_path = qoder_support_dir / file_name
+                if file_path.exists():
+                    try:
+                        if file_path.is_dir():
+                            shutil.rmtree(file_path)
+                        else:
+                            file_path.unlink()
+                        self.log(f"   已清除: {file_name}")
+                        cleaned_count += 1
+                    except Exception as e:
+                        self.log(f"   清除失败 {file_name}: {e}")
+            
+            # 7. 清理数据库目录内的所有文件（新增）
+            databases_dir = qoder_support_dir / "databases"
+            if databases_dir.exists():
+                try:
+                    shutil.rmtree(databases_dir)
+                    self.log("   已清除: databases 目录及其所有内容")
+                    cleaned_count += 1
+                except Exception as e:
+                    self.log(f"   清除失败 databases: {e}")
+            
+            # 8. 清理 Electron 相关的持久化数据（新增）
+            electron_files = [
+                "Dictionaries", "Platform Notifications",
+                "ShaderCache", "VideoDecodeStats",
+                "OriginTrials", "BrowserMetrics",
+                "AutofillRegexes", "SafeBrowsing"
+            ]
+            
+            for electron_file in electron_files:
+                file_path = qoder_support_dir / electron_file
+                if file_path.exists():
+                    try:
+                        if file_path.is_dir():
+                            shutil.rmtree(file_path)
+                        else:
+                            file_path.unlink()
+                        self.log(f"   已清除: {electron_file}")
+                        cleaned_count += 1
+                    except Exception as e:
+                        self.log(f"   清除失败 {electron_file}: {e}")
             
             self.log(f"   高级身份清理完成，处理了 {cleaned_count} 个项目")
             

@@ -6,6 +6,9 @@
 ![Python](https://img.shields.io/badge/Python-3.6+-green)
 ![PyQt5](https://img.shields.io/badge/GUI-PyQt5-orange)
 
+**重要提示：清除重置了之后再注册账号时，请使用指纹浏览器注册，之前的账号登录信息会有缓存，笔者注册的新账户使用第2天了，没有被封。**
+**另外，跟 Cursor 和 Augment一样，检测的手段可能会越来越严格，所以不保证本工具一直可以使用。**
+
 ## 📋 目录
 
 - [功能特性](#功能特性)
