@@ -212,8 +212,9 @@ python3 qoder_reset_gui.py
 
 ```
 qoder-free/
-├── qoder_reset_gui.py          # 主程序文件（PyQt5界面）
-├── start_gui.sh               # 启动脚本
+├── qoder_reset_gui.py          # 主程序文件（PyQt5界面，跨平台支持）
+├── start_gui.sh               # macOS/Linux启动脚本
+├── start_gui.bat              # Windows启动脚本（新增）
 └── README.md                  # 完整说明文档
 ```
 
@@ -229,19 +230,48 @@ qoder-free/
 ### 操作的文件和目录
 
 ```
-~/Library/Application Support/Qoder/
-├── machineid                           # 机器ID文件
-├── User/globalStorage/storage.json     # 遥测数据配置
-├── User/workspaceStorage/              # 工作区存储（包含对话记录）
-├── User/History/                       # 历史记录
-├── Session Storage/                    # 会话存储
-├── Cache/                             # 应用缓存
-├── blob_storage/                      # Blob存储
-├── Code Cache/                        # 代码缓存
-├── SharedClientCache/                 # 共享客户端缓存
-├── GPUCache/                          # GPU缓存
-├── DawnGraphiteCache/                 # Dawn图形缓存
-└── DawnWebGPUCache/                   # Dawn WebGPU缓存
+~/Library/Application Support/Qoder/  (或 Windows: %APPDATA%\Qoder\)
+├── machineid                               # 机器ID文件
+├── Network Persistent State                # 网络连接历史和指纹（关键）
+├── TransportSecurity                       # HSTS等安全策略记录
+├── Trust Tokens                           # 信任令牌数据库
+├── Trust Tokens-journal                   # 信任令牌日志
+├── SharedStorage                           # 共享存储数据库
+├── SharedStorage-wal                       # 共享存储WAL文件
+├── Preferences                             # 用户偏好设置
+├── Local State                             # Chromium本地状态
+├── code.lock                               # 代码锁文件
+├── languagepacks.json                      # 语言包配置
+├── *.sock                                  # Socket文件
+├── User/
+│   ├── globalStorage/storage.json         # 遥测数据配置
+│   ├── settings.json                      # 用户设置（保留）
+│   └── workspaceStorage/                  # 工作区存储（包含对话记录）
+│       ├── */chatSessions/            # 对话会话文件（保留）
+│       └── */chatEditingSessions/     # 编辑会话状态（保留）
+├── SharedClientCache/                      # 共享客户端缓存
+│   ├── .info                              # 语言服务器信息（端口/PID）
+│   ├── .lock                              # 进程锁文件
+│   ├── mcp.json                           # MCP配置文件
+│   ├── index/                             # 索引数据目录（选择性保留）
+│   └── cache/                             # 共享缓存数据
+├── Local Storage/leveldb/                  # 本地存储LevelDB（保留对话时保留）
+├── Session Storage/                        # 会话存储（可能包含身份信息）
+├── WebStorage/                             # Web存储（可能包含身份信息）
+├── Shared Dictionary/                      # 共享字典
+├── Cache/                                  # 应用缓存
+├── Code Cache/                             # 代码缓存
+├── GPUCache/                               # GPU缓存
+├── DawnGraphiteCache/                      # Dawn图形缓存
+├── DawnWebGPUCache/                        # Dawn WebGPU缓存
+├── CachedData/                             # 缓存数据
+├── CachedProfilesData/                     # 缓存配置数据
+├── Crashpad/                               # 崩溃报告目录
+├── Service Worker/                         # 服务工作线程数据
+├── databases/                              # 数据库目录
+├── logs/                                   # 日志文件
+├── Backups/                                # 备份文件
+└── clp/                                    # 剪贴板数据
 ```
 
 ## 🚨 故障排除
@@ -312,16 +342,22 @@ chmod -R u+rw ~/Library/Application\ Support/Qoder/
 ```python
 class QoderResetGUI(QMainWindow):
     def __init__(self):
-        # 初始化界面
+        # 初始化界面和多语言支持
 
+    def init_translations(self):
+        # 初始化多语言字典（支持中文/英文/俄文）
+        
     def init_ui(self):
-        # 创建界面元素
+        # 创建现代化PyQt5界面元素
+
+    def change_language(self, language_text):
+        # 动态语言切换功能
 
     def initialize_status_check(self):
-        # 启动时状态检查
+        # 增强的启动时状态检查（新增11项检查）
 
     def check_qoder_running(self):
-        # 检查Qoder进程
+        # 跨平台进程检测（macOS/Windows/Linux）
 
     def close_qoder(self):
         # 关闭Qoder功能
@@ -330,16 +366,34 @@ class QoderResetGUI(QMainWindow):
         # 重置机器ID
 
     def reset_telemetry(self):
-        # 重置遥测数据
+        # 增强的遥测数据重置（新增sqmId）
 
     def one_click_reset(self):
         # 一键重置功能
 
+    def deep_identity_cleanup(self):
+        # 深度身份清理功能（新增）
+        
+    def login_identity_cleanup(self):
+        # 登录身份清理功能（新增）
+
     def perform_full_reset(self, preserve_chat=True):
-        # 执行完整重置
+        # 执行完整重置（增强版）
+
+    def perform_advanced_identity_cleanup(self, qoder_support_dir, preserve_chat=False):
+        # 高级身份清理（新增）
+        
+    def perform_login_identity_cleanup(self, qoder_support_dir):
+        # 登录相关身份清理（新增）
 
     def clear_chat_history(self, qoder_support_dir):
-        # 清除对话记录
+        # 清除对话记录（增强版）
+        
+def get_qoder_data_dir():
+    # 跨平台数据目录获取（新增）
+    
+def check_process_running(process_name):
+    # 跨平台进程检测函数（新增）
 ```
 
 ### 自定义修改
@@ -363,7 +417,17 @@ class QoderResetGUI(QMainWindow):
 
 ## 📝 更新日志
 
-### v2.1.0 - 身份识别修复版本 (最新版本)
+### v2.2.0 - 智能跨平台版本 (最新版本)
+- 🌍 **跨平台支持** - 新增 Windows 和 Linux 支持
+- 🔄 **智能对话保留** - 重新设计对话记录保留机制
+- ✨ **多语言界面** - 支持中文/英文/俄文切换
+- 🔧 **Windows 启动脚本** - 新增 start_gui.bat 自动环境检查
+- 📊 **增强遥测重置** - 新增 telemetry.sqmId 重置
+- 🔍 **精确身份清理** - 基于实际目录分析的清理策略
+- 🧠 **智能索引保留** - 保留对话时选择性保留索引数据
+- 🛡️ **安全增强** - 更精细的身份信息识别和清理
+
+### v2.1.0 - 身份识别修复版本
 - ✨ 新增深度身份清理功能
 - 🔧 修复遗漏的关键身份识别文件
 - 📈 增强状态检查功能
@@ -515,15 +579,7 @@ python3 -c "import tkinter; print('tkinter 可用')"
    - 确保终端有足够权限运行GUI应用
    - 尝试在不同的终端应用中运行
 
-## 📁 项目文件
 
-```
-qoder-free/
-├── qoder_reset_gui.py      # 主程序（PyQt5界面，跨平台支持）
-├── start_gui.sh           # macOS/Linux 启动脚本
-├── start_gui.bat          # Windows 启动脚本
-└── README.md              # 完整说明文档
-```
 
 ## ⚠️ 重要提醒
 
@@ -558,6 +614,6 @@ python qoder_reset_gui.py
 
 ---
 
-**版本**: 1.0  
-**开发**: [Mr.T](https://www.74110.net/recommendation/qoder-free/) 
-**支持**: macOS
+**版本**: 2.2.0  
+**开发**: Mac：[Mr.T](https://www.74110.net/recommendation/qoder-free/)  Windows：[MRLTR-CMD](https://github.com/MRLTR-CMD) 
+**支持**: macOS、Windows
