@@ -12,6 +12,7 @@ import shutil
 import hashlib
 import subprocess
 import webbrowser
+import platform
 from pathlib import Path
 from datetime import datetime
 
@@ -27,11 +28,154 @@ except ImportError:
 class QoderResetGUI(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.current_language = 'zh'  # 默认中文
+        self.init_translations()
         self.init_ui()
+    
+    def init_translations(self):
+        """初始化多语言字典"""
+        self.translations = {
+            'zh': {  # 中文
+                'window_title': 'Qoder-Free',
+                'intro_text': 'Qoder-Free主要用于重置Qoder应用程序的用户身份信息',
+                'operation_area': '操作区域:',
+                'one_click_config': '一键修改配置',
+                'close_qoder': '关闭Qoder',
+                'reset_machine_id': '重置机器ID',
+                'reset_telemetry': '重置遥测数据',
+                'deep_identity_clean': '深度身份清理',
+                'login_identity_clean': '清理登录身份',
+                'advanced_options': '高级选项',
+                'preserve_chat': '保留对话记录',
+                'operation_log': '操作日志:',
+                'clear_log': '清空日志',
+                'github': 'Github',
+                'language': '语言',
+                
+                # 日志消息
+                'tool_started': 'Qoder-Free 重置工具已启动',
+                'log_cleared': '日志已清空',
+                'qoder_running': 'Qoder正在运行',
+                'qoder_not_running': 'Qoder未运行',
+                'qoder_directory_exists': 'Qoder目录存在',
+                'machine_id': '机器ID',
+                'telemetry_machine_id': '遥测机器ID',
+                'device_id': '设备ID',
+                'cache_directories_found': '个缓存目录',
+                'chat_directories_found': '个对话相关目录',
+                'identity_files_found': '个身份识别文件',
+                'status_check_complete': '状态检查完成，可以开始操作',
+                
+                # 对话框消息
+                'qoder_detected_running': '检测到 Qoder 正在运行',
+                'please_close_qoder': '请手动关闭 Qoder 应用程序',
+                'confirm_one_click': '确认一键修改',
+                'confirm_deep_clean': '确认深度清理',
+                'confirm_login_clean': '确认清理登录身份',
+                'operation_complete': '操作完成',
+                'operation_failed': '操作失败',
+                'error': '错误',
+                'success': '成功',
+                'warning': '警告',
+                'status_check': '状态检查'
+            },
+            'en': {  # English
+                'window_title': 'Qoder-Free',
+                'intro_text': 'Qoder-Free is mainly used to reset user identity information of Qoder application',
+                'operation_area': 'Operation Area:',
+                'one_click_config': 'One-Click Configuration',
+                'close_qoder': 'Close Qoder',
+                'reset_machine_id': 'Reset Machine ID',
+                'reset_telemetry': 'Reset Telemetry',
+                'deep_identity_clean': 'Deep Identity Cleanup',
+                'login_identity_clean': 'Clean Login Identity',
+                'advanced_options': 'Advanced Options',
+                'preserve_chat': 'Preserve Chat History',
+                'operation_log': 'Operation Log:',
+                'clear_log': 'Clear Log',
+                'github': 'Github',
+                'language': 'Language',
+                
+                # Log messages
+                'tool_started': 'Qoder-Free reset tool started',
+                'log_cleared': 'Log cleared',
+                'qoder_running': 'Qoder is running',
+                'qoder_not_running': 'Qoder is not running',
+                'qoder_directory_exists': 'Qoder directory exists',
+                'machine_id': 'Machine ID',
+                'telemetry_machine_id': 'Telemetry Machine ID',
+                'device_id': 'Device ID',
+                'cache_directories_found': 'cache directories found',
+                'chat_directories_found': 'chat-related directories found',
+                'identity_files_found': 'identity files found',
+                'status_check_complete': 'Status check completed, ready to operate',
+                
+                # Dialog messages
+                'qoder_detected_running': 'Qoder Detected Running',
+                'please_close_qoder': 'Please close Qoder application manually',
+                'confirm_one_click': 'Confirm One-Click Reset',
+                'confirm_deep_clean': 'Confirm Deep Cleanup',
+                'confirm_login_clean': 'Confirm Login Identity Cleanup',
+                'operation_complete': 'Operation Complete',
+                'operation_failed': 'Operation Failed',
+                'error': 'Error',
+                'success': 'Success',
+                'warning': 'Warning',
+                'status_check': 'Status Check'
+            },
+            'ru': {  # Русский
+                'window_title': 'Qoder-Free',
+                'intro_text': 'Qoder-Free в основном используется для сброса пользовательской информации приложения Qoder',
+                'operation_area': 'Область операций:',
+                'one_click_config': 'Одним кликом',
+                'close_qoder': 'Закрыть Qoder',
+                'reset_machine_id': 'Сбросить ID машины',
+                'reset_telemetry': 'Сбросить телеметрию',
+                'deep_identity_clean': 'Глубокая очистка',
+                'login_identity_clean': 'Очистить вход',
+                'advanced_options': 'Дополнительно',
+                'preserve_chat': 'Сохранить чат',
+                'operation_log': 'Журнал операций:',
+                'clear_log': 'Очистить журнал',
+                'github': 'Github',
+                'language': 'Язык',
+                
+                # Log messages
+                'tool_started': 'Инструмент сброса Qoder-Free запущен',
+                'log_cleared': 'Журнал очищен',
+                'qoder_running': 'Qoder запущен',
+                'qoder_not_running': 'Qoder не запущен',
+                'qoder_directory_exists': 'Папка Qoder существует',
+                'machine_id': 'ID машины',
+                'telemetry_machine_id': 'ID машины телеметрии',
+                'device_id': 'ID устройства',
+                'cache_directories_found': 'папок кеша найдено',
+                'chat_directories_found': 'папок чата найдено',
+                'identity_files_found': 'файлов идентификации найдено',
+                'status_check_complete': 'Проверка статуса завершена, готов к работе',
+                
+                # Dialog messages
+                'qoder_detected_running': 'Обнаружен запущенный Qoder',
+                'please_close_qoder': 'Пожалуйста, закройте приложение Qoder вручную',
+                'confirm_one_click': 'Подтвердить сброс одним кликом',
+                'confirm_deep_clean': 'Подтвердить глубокую очистку',
+                'confirm_login_clean': 'Подтвердить очистку входа',
+                'operation_complete': 'Операция завершена',
+                'operation_failed': 'Операция не удалась',
+                'error': 'Ошибка',
+                'success': 'Успех',
+                'warning': 'Предупреждение',
+                'status_check': 'Проверка статуса'
+            }
+        }
+    
+    def tr(self, key):
+        """获取当前语言的翻译文本"""
+        return self.translations.get(self.current_language, {}).get(key, key)
     
     def init_ui(self):
         """初始化用户界面"""
-        self.setWindowTitle("Qoder-Free")
+        self.setWindowTitle(self.tr('window_title'))
         self.setFixedSize(800, 1000)
         self.setStyleSheet("background-color: white;")
         
@@ -44,10 +188,61 @@ class QoderResetGUI(QMainWindow):
         main_layout.setContentsMargins(40, 30, 40, 30)
         main_layout.setSpacing(20)
         
+        # 添加右上角语言切换组件
+        top_layout = QHBoxLayout()
+        top_layout.addStretch()  # 推到右侧
+        
+        # 语言标签
+        lang_label = QLabel(self.tr('language') + ":")
+        lang_label.setStyleSheet("""
+            QLabel {
+                font-size: 11px;
+                color: #666666;
+                margin-right: 5px;
+            }
+        """)
+        top_layout.addWidget(lang_label)
+        
+        # 语言下拉框
+        self.language_combo = QComboBox()
+        self.language_combo.addItems(['中文', 'English', 'Русский'])
+        self.language_combo.setFixedSize(90, 25)
+        self.language_combo.setStyleSheet("""
+            QComboBox {
+                background-color: white;
+                border: 1px solid #dadce0;
+                border-radius: 3px;
+                padding: 2px 8px;
+                font-size: 10px;
+                color: #333333;
+            }
+            QComboBox::drop-down {
+                border: none;
+                width: 18px;
+            }
+            QComboBox::down-arrow {
+                image: none;
+                border-left: 4px solid transparent;
+                border-right: 4px solid transparent;
+                border-top: 4px solid #666;
+                margin-top: 2px;
+            }
+            QComboBox QAbstractItemView {
+                background-color: white;
+                border: 1px solid #dadce0;
+                selection-background-color: #e8f0fe;
+                font-size: 10px;
+            }
+        """)
+        self.language_combo.currentTextChanged.connect(self.change_language)
+        top_layout.addWidget(self.language_combo)
+        
+        main_layout.addLayout(top_layout)
+        
         # 1. 标题
-        title_label = QLabel("Qoder-Free")
-        title_label.setAlignment(Qt.AlignCenter)
-        title_label.setStyleSheet("""
+        self.title_label = QLabel(self.tr('window_title'))
+        self.title_label.setAlignment(Qt.AlignCenter)
+        self.title_label.setStyleSheet("""
             QLabel {
                 font-size: 24px;
                 font-weight: bold;
@@ -55,23 +250,23 @@ class QoderResetGUI(QMainWindow):
                 margin-bottom: 10px;
             }
         """)
-        main_layout.addWidget(title_label)
+        main_layout.addWidget(self.title_label)
         
         # 2. 说明文字
-        intro_label = QLabel("Qoder-Free主要用于重置Qoder应用程序的用户身份信息")
-        intro_label.setAlignment(Qt.AlignCenter)
-        intro_label.setStyleSheet("""
+        self.intro_label = QLabel(self.tr('intro_text'))
+        self.intro_label.setAlignment(Qt.AlignCenter)
+        self.intro_label.setStyleSheet("""
             QLabel {
                 font-size: 12px;
                 color: #666666;
                 margin-bottom: 20px;
             }
         """)
-        main_layout.addWidget(intro_label)
+        main_layout.addWidget(self.intro_label)
         
         # 3. 操作区域标题
-        operation_title = QLabel("操作区域:")
-        operation_title.setStyleSheet("""
+        self.operation_title = QLabel(self.tr('operation_area'))
+        self.operation_title.setStyleSheet("""
             QLabel {
                 font-size: 14px;
                 font-weight: bold;
@@ -79,10 +274,10 @@ class QoderResetGUI(QMainWindow):
                 margin-bottom: 10px;
             }
         """)
-        main_layout.addWidget(operation_title)
+        main_layout.addWidget(self.operation_title)
         
         # 4. 蓝色横幅按钮
-        self.one_click_btn = QPushButton("一键修改配置")
+        self.one_click_btn = QPushButton(self.tr('one_click_config'))
         self.one_click_btn.setFixedSize(300, 40)  # 设置固定宽度300px，高度40px
         self.one_click_btn.setStyleSheet("""
             QPushButton {
@@ -117,7 +312,7 @@ class QoderResetGUI(QMainWindow):
         button_row1.setSpacing(15)
         
         # 关闭Qoder按钮 (红色)
-        self.close_qoder_btn = QPushButton("关闭Qoder")
+        self.close_qoder_btn = QPushButton(self.tr('close_qoder'))
         self.close_qoder_btn.setFixedSize(150, 40)
         self.close_qoder_btn.setStyleSheet("""
             QPushButton {
@@ -139,7 +334,7 @@ class QoderResetGUI(QMainWindow):
         button_row1.addWidget(self.close_qoder_btn)
         
         # 重置机器ID按钮 (蓝色)
-        self.reset_machine_id_btn = QPushButton("重置机器ID")
+        self.reset_machine_id_btn = QPushButton(self.tr('reset_machine_id'))
         self.reset_machine_id_btn.setFixedSize(150, 40)
         self.reset_machine_id_btn.setStyleSheet("""
             QPushButton {
@@ -167,7 +362,7 @@ class QoderResetGUI(QMainWindow):
         button_row2.setSpacing(15)
         
         # 重置遥测数据按钮 (蓝色)
-        self.reset_telemetry_btn = QPushButton("重置遥测数据")
+        self.reset_telemetry_btn = QPushButton(self.tr('reset_telemetry'))
         self.reset_telemetry_btn.setFixedSize(150, 40)
         self.reset_telemetry_btn.setStyleSheet("""
             QPushButton {
@@ -189,7 +384,7 @@ class QoderResetGUI(QMainWindow):
         button_row2.addWidget(self.reset_telemetry_btn)
         
         # 深度身份清理按钮 (橙色，新增)
-        self.deep_clean_btn = QPushButton("深度身份清理")
+        self.deep_clean_btn = QPushButton(self.tr('deep_identity_clean'))
         self.deep_clean_btn.setFixedSize(150, 40)
         self.deep_clean_btn.setStyleSheet("""
             QPushButton {
@@ -215,7 +410,7 @@ class QoderResetGUI(QMainWindow):
         button_row3.setSpacing(15)
         
         # 清理登录身份按钮 (紫色，新增)
-        self.login_clean_btn = QPushButton("清理登录身份")
+        self.login_clean_btn = QPushButton(self.tr('login_identity_clean'))
         self.login_clean_btn.setFixedSize(150, 40)
         self.login_clean_btn.setStyleSheet("""
             QPushButton {
@@ -237,10 +432,10 @@ class QoderResetGUI(QMainWindow):
         button_row3.addWidget(self.login_clean_btn)
         
         # 占位按钮（保持布局均衡）
-        placeholder_btn = QPushButton("高级选项")
-        placeholder_btn.setFixedSize(150, 40)
-        placeholder_btn.setEnabled(False)
-        placeholder_btn.setStyleSheet("""
+        self.placeholder_btn = QPushButton(self.tr('advanced_options'))
+        self.placeholder_btn.setFixedSize(150, 40)
+        self.placeholder_btn.setEnabled(False)
+        self.placeholder_btn.setStyleSheet("""
             QPushButton {
                 background-color: #e0e0e0;
                 color: #9e9e9e;
@@ -250,13 +445,13 @@ class QoderResetGUI(QMainWindow):
                 border-radius: 5px;
             }
         """)
-        button_row3.addWidget(placeholder_btn)
+        button_row3.addWidget(self.placeholder_btn)
         
         button_layout.addLayout(button_row3)
         main_layout.addLayout(button_layout)
 
         # 5.5. 保留对话记录勾选框
-        self.preserve_chat_checkbox = QCheckBox("保留对话记录")
+        self.preserve_chat_checkbox = QCheckBox(self.tr('preserve_chat'))
         self.preserve_chat_checkbox.setChecked(True)  # 默认勾选
         self.preserve_chat_checkbox.setStyleSheet("""
             QCheckBox {
@@ -288,8 +483,8 @@ class QoderResetGUI(QMainWindow):
         main_layout.addLayout(checkbox_layout)
 
         # 6. 操作日志区域
-        log_title = QLabel("操作日志:")
-        log_title.setStyleSheet("""
+        self.log_title = QLabel(self.tr('operation_log'))
+        self.log_title.setStyleSheet("""
             QLabel {
                 font-size: 14px;
                 font-weight: bold;
@@ -298,7 +493,7 @@ class QoderResetGUI(QMainWindow):
                 margin-bottom: 10px;
             }
         """)
-        main_layout.addWidget(log_title)
+        main_layout.addWidget(self.log_title)
         
         # 日志文本框
         self.log_text = QTextEdit()
@@ -321,7 +516,7 @@ class QoderResetGUI(QMainWindow):
         clear_layout = QHBoxLayout()
         clear_layout.addStretch()
         
-        self.clear_log_btn = QPushButton("清空日志")
+        self.clear_log_btn = QPushButton(self.tr('clear_log'))
         self.clear_log_btn.setFixedSize(100, 30)
         self.clear_log_btn.setStyleSheet("""
             QPushButton {
@@ -345,9 +540,9 @@ class QoderResetGUI(QMainWindow):
         main_layout.addLayout(clear_layout)
         
         # 7. 底部GitHub链接
-        github_btn = QPushButton("Github")
-        github_btn.setFixedSize(120, 40)
-        github_btn.setStyleSheet("""
+        self.github_btn = QPushButton(self.tr('github'))
+        self.github_btn.setFixedSize(120, 40)
+        self.github_btn.setStyleSheet("""
             QPushButton {
                 background-color: #333333;
                 color: white;
@@ -363,18 +558,61 @@ class QoderResetGUI(QMainWindow):
                 background-color: #222222;
             }
         """)
-        github_btn.clicked.connect(self.open_github)
+        self.github_btn.clicked.connect(self.open_github)
         
         github_layout = QHBoxLayout()
         github_layout.addStretch()
-        github_layout.addWidget(github_btn)
+        github_layout.addWidget(self.github_btn)
         github_layout.addStretch()
         main_layout.addLayout(github_layout)
         
         # 添加初始日志
-        self.log("Qoder-Free 重置工具已启动")
+        self.log(self.tr('tool_started'))
         self.log("=" * 50)
         self.initialize_status_check()
+    
+    def change_language(self, language_text):
+        """切换语言"""
+        language_map = {
+            '中文': 'zh',
+            'English': 'en',
+            'Русский': 'ru'
+        }
+        
+        new_language = language_map.get(language_text, 'zh')
+        if new_language != self.current_language:
+            self.current_language = new_language
+            self.update_ui_text()
+    
+    def update_ui_text(self):
+        """更新界面文本"""
+        # 更新窗口标题
+        self.setWindowTitle(self.tr('window_title'))
+        
+        # 更新标签文本
+        self.title_label.setText(self.tr('window_title'))
+        self.intro_label.setText(self.tr('intro_text'))
+        self.operation_title.setText(self.tr('operation_area'))
+        self.log_title.setText(self.tr('operation_log'))
+        
+        # 更新按钮文本
+        self.one_click_btn.setText(self.tr('one_click_config'))
+        self.close_qoder_btn.setText(self.tr('close_qoder'))
+        self.reset_machine_id_btn.setText(self.tr('reset_machine_id'))
+        self.reset_telemetry_btn.setText(self.tr('reset_telemetry'))
+        self.deep_clean_btn.setText(self.tr('deep_identity_clean'))
+        self.login_clean_btn.setText(self.tr('login_identity_clean'))
+        self.placeholder_btn.setText(self.tr('advanced_options'))
+        self.clear_log_btn.setText(self.tr('clear_log'))
+        self.github_btn.setText(self.tr('github'))
+        
+        # 更新复选框文本
+        self.preserve_chat_checkbox.setText(self.tr('preserve_chat'))
+        
+        # 清空日志并重新初始化
+        self.log_text.clear()
+        self.log(self.tr('tool_started'))
+        self.log("=" * 50)
     
     def log(self, message):
         """添加日志消息"""
@@ -389,7 +627,7 @@ class QoderResetGUI(QMainWindow):
     def clear_log(self):
         """清空日志"""
         self.log_text.clear()
-        self.log("日志已清空")
+        self.log(self.tr('log_cleared'))
 
     def initialize_status_check(self):
         """初始化时检查各项状态"""
@@ -1055,7 +1293,9 @@ class QoderResetGUI(QMainWindow):
             "Preferences",
             "Login Credentials",
             "Web Data", "Web Data-journal",
-            "cert_transparency_reporter_state.json"
+            "cert_transparency_reporter_state.json",
+            "Local State",  # 包含加密密钥，极其重要！
+            "NetworkDataMigrated"  # 网络数据迁移标记
         ]
         
         identity_cleaned = 0
@@ -1078,7 +1318,11 @@ class QoderResetGUI(QMainWindow):
             "Service Worker",
             "Certificate Revocation Lists",
             "SSLCertificates",
-            "databases"
+            "databases",
+            "clp",  # 剪贴板数据，可能包含敏感信息
+            "logs",  # 日志文件，可能记录用户活动
+            "Backups",  # 备份文件，可能包含历史身份信息
+            "CachedExtensionVSIXs"  # 扩展缓存，显示用户安装的扩展
         ]
         
         for storage_dir in storage_dirs:
