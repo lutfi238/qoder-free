@@ -674,6 +674,18 @@ class QoderResetGUI(QMainWindow):
         self.log_text.clear()
         self.log(self.tr('log_cleared'))
 
+    def get_qoder_data_dir(self):
+        """获取Qoder数据目录路径（跨平台支持）"""
+        home_dir = Path.home()
+        system = platform.system()
+
+        if system == "Windows":
+            # Windows: %APPDATA%\Qoder
+            return home_dir / "AppData" / "Roaming" / "Qoder"
+        else:
+            # 默认使用macOS路径作为fallback
+            return home_dir / "Library" / "Application Support" / "Qoder"
+
     def initialize_status_check(self):
         """初始化时检查各项状态"""
         try:
@@ -687,8 +699,7 @@ class QoderResetGUI(QMainWindow):
 
             # 2. 检查Qoder目录
             self.log("2. 检查Qoder目录...")
-            home_dir = Path.home()
-            qoder_support_dir = home_dir / "Library/Application Support/Qoder"
+            qoder_support_dir = self.get_qoder_data_dir()
 
             if qoder_support_dir.exists():
                 self.log(f"   ✅ Qoder目录存在")
@@ -919,8 +930,7 @@ class QoderResetGUI(QMainWindow):
             return
 
         try:
-            home_dir = Path.home()
-            qoder_support_dir = home_dir / "Library/Application Support/Qoder"
+            qoder_support_dir = self.get_qoder_data_dir()
             
             if not qoder_support_dir.exists():
                 raise Exception("未找到 Qoder 应用数据目录")
@@ -1114,8 +1124,7 @@ class QoderResetGUI(QMainWindow):
             return
 
         try:
-            home_dir = Path.home()
-            qoder_support_dir = home_dir / "Library/Application Support/Qoder"
+            qoder_support_dir = self.get_qoder_data_dir()
             
             if not qoder_support_dir.exists():
                 raise Exception("未找到 Qoder 应用数据目录")
@@ -1149,8 +1158,7 @@ class QoderResetGUI(QMainWindow):
             return
 
         try:
-            home_dir = Path.home()
-            qoder_support_dir = home_dir / "Library/Application Support/Qoder"
+            qoder_support_dir = self.get_qoder_data_dir()
             machine_id_file = qoder_support_dir / "machineid"
 
             if not qoder_support_dir.exists():
@@ -1182,8 +1190,7 @@ class QoderResetGUI(QMainWindow):
             return
 
         try:
-            home_dir = Path.home()
-            qoder_support_dir = home_dir / "Library/Application Support/Qoder"
+            qoder_support_dir = self.get_qoder_data_dir()
             storage_json_file = qoder_support_dir / "User/globalStorage/storage.json"
 
             if not storage_json_file.exists():
@@ -1274,8 +1281,7 @@ class QoderResetGUI(QMainWindow):
 
     def perform_full_reset(self, preserve_chat=True):
         """执行完整重置"""
-        home_dir = Path.home()
-        qoder_support_dir = home_dir / "Library/Application Support/Qoder"
+        qoder_support_dir = self.get_qoder_data_dir()
 
         if not qoder_support_dir.exists():
             raise Exception("未找到 Qoder 应用数据目录")
