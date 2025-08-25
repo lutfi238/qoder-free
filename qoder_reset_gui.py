@@ -1080,7 +1080,7 @@ class QoderResetGUI(QMainWindow):
             self.log("=" * 40)
             
             # 执行高级身份清理
-            self.perform_advanced_identity_cleanup(qoder_support_dir)
+            self.perform_advanced_identity_cleanup(qoder_support_dir, preserve_chat=False)
             
             self.log("=" * 40)
             self.log("深度身份清理完成！")
@@ -1311,10 +1311,6 @@ class QoderResetGUI(QMainWindow):
         
         # 5. 清理存储目录
         storage_dirs = [
-            "Local Storage",
-            "Session Storage", 
-            "WebStorage",
-            "Shared Dictionary",
             "Service Worker",
             "Certificate Revocation Lists",
             "SSLCertificates",
@@ -1324,6 +1320,19 @@ class QoderResetGUI(QMainWindow):
             "Backups",  # 备份文件，可能包含历史身份信息
             "CachedExtensionVSIXs"  # 扩展缓存，显示用户安装的扩展
         ]
+        
+        # 根据是否保留对话记录来决定清理哪些存储目录
+        if not preserve_chat:
+            # 如果不保留对话记录，清理所有存储目录
+            storage_dirs.extend([
+                "Local Storage",
+                "Session Storage", 
+                "WebStorage",
+                "Shared Dictionary"
+            ])
+        else:
+            # 如果保留对话记录，只清理身份相关的存储，保留可能包含对话索引的存储
+            self.log("   保留对话记录模式：跳过 Local Storage, Session Storage, WebStorage")
         
         for storage_dir in storage_dirs:
             storage_path = qoder_support_dir / storage_dir
@@ -1339,7 +1348,7 @@ class QoderResetGUI(QMainWindow):
         
         # 5. 执行高级身份清理（新增）
         self.log("5. 执行高级身份清理...")
-        self.perform_advanced_identity_cleanup(qoder_support_dir)
+        self.perform_advanced_identity_cleanup(qoder_support_dir, preserve_chat)
 
         # 6. 处理对话记录
         if preserve_chat:
@@ -1349,7 +1358,7 @@ class QoderResetGUI(QMainWindow):
             self.log("6. 清除对话记录...")
             self.clear_chat_history(qoder_support_dir)
 
-    def perform_advanced_identity_cleanup(self, qoder_support_dir):
+    def perform_advanced_identity_cleanup(self, qoder_support_dir, preserve_chat=False):
         """执行高级身份清理，清除所有可能的身份识别信息"""
         try:
             self.log("开始高级身份清理...")
@@ -1370,16 +1379,6 @@ class QoderResetGUI(QMainWindow):
                         except Exception as e:
                             self.log(f"   清除失败 {file_name}: {e}")
                 
-                # 清理 index 目录（包含索引数据）
-                index_dir = shared_cache / "index"
-                if index_dir.exists():
-                    try:
-                        shutil.rmtree(index_dir)
-                        self.log("   已清除: SharedClientCache/index")
-                        cleaned_count += 1
-                    except Exception as e:
-                        self.log(f"   清除失败 index: {e}")
-                
                 # 清理 cache 目录
                 cache_dir = shared_cache / "cache"
                 if cache_dir.exists():
@@ -1389,6 +1388,20 @@ class QoderResetGUI(QMainWindow):
                         cleaned_count += 1
                     except Exception as e:
                         self.log(f"   清除失败 cache: {e}")
+                
+                # 在保留对话记录模式下，保留 index 目录（可能包含对话索引）
+                if not preserve_chat:
+                    # 清理 index 目录（包含索引数据）
+                    index_dir = shared_cache / "index"
+                    if index_dir.exists():
+                        try:
+                            shutil.rmtree(index_dir)
+                            self.log("   已清除: SharedClientCache/index")
+                            cleaned_count += 1
+                        except Exception as e:
+                            self.log(f"   清除失败 index: {e}")
+                else:
+                    self.log("   保留对话模式：保留 SharedClientCache/index")
             
             # 2. 清理系统级别的身份文件
             system_files = [
