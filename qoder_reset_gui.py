@@ -1254,14 +1254,37 @@ class QoderResetGUI(QMainWindow):
             new_uuid = str(uuid.uuid4())
             machine_id_hash = hashlib.sha256(new_uuid.encode()).hexdigest()
             device_id = str(uuid.uuid4())
+            sqm_id = str(uuid.uuid4())  # 新增：软件质量度量ID
 
+            # 重置所有遥测相关的标识符
             data['telemetry.machineId'] = machine_id_hash
             data['telemetry.devDeviceId'] = device_id
+            data['telemetry.sqmId'] = sqm_id
+            
+            # 清除其他可能的身份识别配置（保留对话时不清除）
+            if not preserve_chat:
+                # 完全重置模式：清除所有可能的身份相关配置
+                identity_keys_to_remove = []
+                for key in data.keys():
+                    if any(keyword in key.lower() for keyword in [
+                        'auth', 'login', 'session', 'token', 'credential',
+                        'device', 'fingerprint', 'tracking', 'analytics'
+                    ]):
+                        identity_keys_to_remove.append(key)
+                
+                for key in identity_keys_to_remove:
+                    del data[key]
+                    self.log(f"   已清除配置: {key}")
+            else:
+                # 保留对话模式：只清除明确的身份识别配置
+                self.log("   保留对话模式：保留非身份相关配置")
 
             with open(storage_json_file, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=4, ensure_ascii=False)
 
-            self.log("   遥测数据已重置")
+            self.log(f"   新遥测机器ID: {machine_id_hash[:16]}...")
+            self.log(f"   新设备ID: {device_id}")
+            self.log(f"   新SQM ID: {sqm_id}")
 
         # 3. 清理缓存
         self.log("3. 清理缓存数据...")
@@ -1285,16 +1308,15 @@ class QoderResetGUI(QMainWindow):
         # 4. 清理身份识别文件（新增）
         self.log("4. 清理身份识别文件...")
         identity_files = [
-            "Network Persistent State",
-            "Cookies", "Cookies-journal",
-            "SharedStorage", "SharedStorage-wal",
-            "Trust Tokens", "Trust Tokens-journal",
-            "TransportSecurity",
-            "Preferences",
-            "Login Credentials",
-            "Web Data", "Web Data-journal",
-            "cert_transparency_reporter_state.json",
-            "Local State",  # 包含加密密钥，极其重要！
+            "Network Persistent State",  # 网络服务器连接历史和指纹
+            "TransportSecurity",  # HSTS等安全策略记录
+            "Trust Tokens", "Trust Tokens-journal",  # 信任令牌数据库
+            "SharedStorage", "SharedStorage-wal",  # 共享存储数据库
+            "Preferences",  # 用户偏好设置（可能包含指纹）
+            "Login Credentials",  # 登录凭据（如果存在）
+            "Web Data", "Web Data-journal",  # Web数据数据库（如果存在）
+            "cert_transparency_reporter_state.json",  # 证书透明度状态
+            "Local State",  # Chromium本地状态（包含加密密钥）
             "NetworkDataMigrated"  # 网络数据迁移标记
         ]
         
@@ -1311,10 +1333,10 @@ class QoderResetGUI(QMainWindow):
         
         # 5. 清理存储目录
         storage_dirs = [
-            "Service Worker",
-            "Certificate Revocation Lists",
-            "SSLCertificates",
-            "databases",
+            "Service Worker",  # 服务工作者缓存
+            "Certificate Revocation Lists",  # 证书撤销列表
+            "SSLCertificates",  # SSL证书缓存
+            "databases",  # 数据库目录
             "clp",  # 剪贴板数据，可能包含敏感信息
             "logs",  # 日志文件，可能记录用户活动
             "Backups",  # 备份文件，可能包含历史身份信息
@@ -1325,14 +1347,21 @@ class QoderResetGUI(QMainWindow):
         if not preserve_chat:
             # 如果不保留对话记录，清理所有存储目录
             storage_dirs.extend([
-                "Local Storage",
-                "Session Storage", 
-                "WebStorage",
-                "Shared Dictionary"
+                "Local Storage",  # 本地存储数据库（可能包含对话索引）
+                "Session Storage",  # 会话存储
+                "WebStorage",  # Web存储
+                "Shared Dictionary"  # 共享字典
             ])
+            self.log("   不保留对话模式：清理所有存储目录")
         else:
-            # 如果保留对话记录，只清理身份相关的存储，保留可能包含对话索引的存储
-            self.log("   保留对话记录模式：跳过 Local Storage, Session Storage, WebStorage")
+            # 如果保留对话记录，保留可能包含对话索引的存储
+            # 但仍需清理可能包含身份信息的存储
+            storage_dirs.extend([
+                "Session Storage",  # 会话存储（可能包含身份信息）
+                "WebStorage",  # Web存储（可能包含身份信息）
+                "Shared Dictionary"  # 共享字典
+            ])
+            self.log("   保留对话模式：保留 Local Storage（可能包含对话索引）")
         
         for storage_dir in storage_dirs:
             storage_path = qoder_support_dir / storage_dir
@@ -1367,7 +1396,7 @@ class QoderResetGUI(QMainWindow):
             # 1. 清理 SharedClientCache 内部文件
             shared_cache = qoder_support_dir / "SharedClientCache"
             if shared_cache.exists():
-                # 保留目录结构，但清除关键文件
+                # 总是清理这些关键的身份文件（会重新生成）
                 critical_files = [".info", ".lock", "mcp.json"]
                 for file_name in critical_files:
                     file_path = shared_cache / file_name
@@ -1379,7 +1408,7 @@ class QoderResetGUI(QMainWindow):
                         except Exception as e:
                             self.log(f"   清除失败 {file_name}: {e}")
                 
-                # 清理 cache 目录
+                # 总是清理 cache 目录（缓存数据）
                 cache_dir = shared_cache / "cache"
                 if cache_dir.exists():
                     try:
@@ -1389,19 +1418,29 @@ class QoderResetGUI(QMainWindow):
                     except Exception as e:
                         self.log(f"   清除失败 cache: {e}")
                 
-                # 在保留对话记录模式下，保留 index 目录（可能包含对话索引）
-                if not preserve_chat:
-                    # 清理 index 目录（包含索引数据）
-                    index_dir = shared_cache / "index"
-                    if index_dir.exists():
+                # 根据保留对话设置决定是否清理 index 目录
+                index_dir = shared_cache / "index"
+                if index_dir.exists():
+                    if not preserve_chat:
+                        # 不保留对话：清理所有索引
                         try:
                             shutil.rmtree(index_dir)
                             self.log("   已清除: SharedClientCache/index")
                             cleaned_count += 1
                         except Exception as e:
                             self.log(f"   清除失败 index: {e}")
-                else:
-                    self.log("   保留对话模式：保留 SharedClientCache/index")
+                    else:
+                        # 保留对话：只清理非对话相关的索引
+                        # 保留可能包含对话搜索索引的文件
+                        for index_item in index_dir.iterdir():
+                            if index_item.is_dir() and 'chat' not in index_item.name.lower():
+                                try:
+                                    shutil.rmtree(index_item)
+                                    self.log(f"   已清除: SharedClientCache/index/{index_item.name}")
+                                    cleaned_count += 1
+                                except Exception as e:
+                                    self.log(f"   清除失败 index/{index_item.name}: {e}")
+                        self.log("   保留对话模式：保留可能的对话索引")
             
             # 2. 清理系统级别的身份文件
             system_files = [
