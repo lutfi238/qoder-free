@@ -13,6 +13,7 @@ import hashlib
 import subprocess
 import webbrowser
 import platform
+import random
 from pathlib import Path
 from datetime import datetime
 
@@ -45,6 +46,7 @@ class QoderResetGUI(QMainWindow):
                 'reset_telemetry': '重置遥测数据',
                 'deep_identity_clean': '深度身份清理',
                 'login_identity_clean': '清理登录身份',
+                'hardware_fingerprint_reset': '硬件指纹重置',
                 'advanced_options': '高级选项',
                 'preserve_chat': '保留对话记录',
                 'operation_log': '操作日志:',
@@ -89,6 +91,7 @@ class QoderResetGUI(QMainWindow):
                 'reset_telemetry': 'Reset Telemetry',
                 'deep_identity_clean': 'Deep Identity Cleanup',
                 'login_identity_clean': 'Clean Login Identity',
+                'hardware_fingerprint_reset': 'Hardware Reset',
                 'advanced_options': 'Advanced Options',
                 'preserve_chat': 'Preserve Chat History',
                 'operation_log': 'Operation Log:',
@@ -133,6 +136,7 @@ class QoderResetGUI(QMainWindow):
                 'reset_telemetry': 'Сбросить телеметрию',
                 'deep_identity_clean': 'Глубокая очистка',
                 'login_identity_clean': 'Очистить вход',
+                'hardware_fingerprint_reset': 'Сброс железа',
                 'advanced_options': 'Дополнительно',
                 'preserve_chat': 'Сохранить чат',
                 'operation_log': 'Журнал операций:',
@@ -177,6 +181,7 @@ class QoderResetGUI(QMainWindow):
                 'reset_telemetry': 'Redefinir Telemetria',
                 'deep_identity_clean': 'Limpeza Profunda de Identidade',
                 'login_identity_clean': 'Limpar Login',
+                'hardware_fingerprint_reset': 'Reset de Hardware',
                 'advanced_options': 'Opções Avançadas',
                 'preserve_chat': 'Preservar Histórico do chat',
                 'operation_log': 'Log de Operações:',
@@ -475,21 +480,27 @@ class QoderResetGUI(QMainWindow):
         self.login_clean_btn.clicked.connect(self.login_identity_cleanup)
         button_row3.addWidget(self.login_clean_btn)
         
-        # 占位按钮（保持布局均衡）
-        self.placeholder_btn = QPushButton(self.tr('advanced_options'))
-        self.placeholder_btn.setFixedSize(150, 40)
-        self.placeholder_btn.setEnabled(False)
-        self.placeholder_btn.setStyleSheet("""
+        # 硬件指纹重置按钮（绿色，新增）
+        self.hardware_reset_btn = QPushButton(self.tr('hardware_fingerprint_reset'))
+        self.hardware_reset_btn.setFixedSize(150, 40)
+        self.hardware_reset_btn.setStyleSheet("""
             QPushButton {
-                background-color: #e0e0e0;
-                color: #9e9e9e;
+                background-color: #4caf50;
+                color: white;
                 font-size: 12px;
                 font-weight: bold;
                 border: none;
                 border-radius: 5px;
             }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+            QPushButton:pressed {
+                background-color: #3d8b40;
+            }
         """)
-        button_row3.addWidget(self.placeholder_btn)
+        self.hardware_reset_btn.clicked.connect(self.hardware_fingerprint_reset)
+        button_row3.addWidget(self.hardware_reset_btn)
         
         button_layout.addLayout(button_row3)
         main_layout.addLayout(button_layout)
@@ -647,7 +658,7 @@ class QoderResetGUI(QMainWindow):
         self.reset_telemetry_btn.setText(self.tr('reset_telemetry'))
         self.deep_clean_btn.setText(self.tr('deep_identity_clean'))
         self.login_clean_btn.setText(self.tr('login_identity_clean'))
-        self.placeholder_btn.setText(self.tr('advanced_options'))
+        self.hardware_reset_btn.setText(self.tr('hardware_fingerprint_reset'))
         self.clear_log_btn.setText(self.tr('clear_log'))
         self.github_btn.setText(self.tr('github'))
         
@@ -873,6 +884,38 @@ class QoderResetGUI(QMainWindow):
         except:
             pass
         return False, []
+
+    def generate_system_version(self, system_type):
+        """根据系统类型生成合适的系统版本号"""
+        if system_type == "Darwin":  # macOS
+            # macOS 版本号格式: 14.x.x (Sonoma), 13.x.x (Ventura), 12.x.x (Monterey)
+            major_versions = [12, 13, 14, 15]  # 支持新版本
+            major = random.choice(major_versions)
+            minor = random.randint(0, 6)
+            patch = random.randint(0, 9)
+            return f"{major}.{minor}.{patch}"
+        elif system_type == "Windows":
+            # Windows 10/11 版本号
+            versions = [
+                "10.0.19045",  # Windows 10 22H2
+                "10.0.22621",  # Windows 11 22H2
+                "10.0.22631",  # Windows 11 23H2
+                "10.0.26100"   # Windows 11 24H2
+            ]
+            base_version = random.choice(versions)
+            # 添加随机的小版本号
+            build_suffix = random.randint(1, 999)
+            return f"{base_version}.{build_suffix}"
+        else:  # Linux 或其他系统
+            # Linux 内核版本号格式: 5.x.x, 6.x.x
+            major_versions = [5, 6]
+            major = random.choice(major_versions)
+            if major == 5:
+                minor = random.randint(10, 19)  # 5.10-5.19
+            else:  # major == 6
+                minor = random.randint(0, 8)    # 6.0-6.8
+            patch = random.randint(0, 50)
+            return f"{major}.{minor}.{patch}"
 
     def close_qoder(self):
         """关闭Qoder"""
@@ -1147,7 +1190,7 @@ class QoderResetGUI(QMainWindow):
             QMessageBox.critical(self, "错误", f"深度清理失败: {e}")
 
     def reset_machine_id(self):
-        """重置机器ID"""
+        """重置机器ID（增强版）"""
         self.log("开始重置机器ID...")
 
         # 检查Qoder是否在运行
@@ -1159,20 +1202,45 @@ class QoderResetGUI(QMainWindow):
 
         try:
             qoder_support_dir = self.get_qoder_data_dir()
-            machine_id_file = qoder_support_dir / "machineid"
 
             if not qoder_support_dir.exists():
                 raise Exception("未找到 Qoder 应用数据目录")
 
-            if machine_id_file.exists():
-                new_machine_id = str(uuid.uuid4())
-                with open(machine_id_file, 'w') as f:
-                    f.write(new_machine_id)
-                self.log(f"机器ID已重置为: {new_machine_id}")
-                QMessageBox.information(self, "成功", "机器ID重置完成")
-            else:
-                self.log("未找到机器ID文件")
-                QMessageBox.warning(self, "警告", "未找到机器ID文件")
+            # 1. 重置主机器ID文件
+            machine_id_file = qoder_support_dir / "machineid"
+            new_machine_id = str(uuid.uuid4())
+            with open(machine_id_file, 'w') as f:
+                f.write(new_machine_id)
+            self.log(f"主机器ID已重置为: {new_machine_id}")
+            
+            # 2. 创建多个可能的机器ID文件（增强防检测）
+            additional_id_files = [
+                "deviceid", "hardware_uuid", "system_uuid", 
+                "platform_id", "installation_id"
+            ]
+            for id_file in additional_id_files:
+                file_path = qoder_support_dir / id_file
+                new_id = str(uuid.uuid4())
+                with open(file_path, 'w') as f:
+                    f.write(new_id)
+                self.log(f"已创建: {id_file}")
+            
+            # 3. 同时重置 storage.json 中的机器ID
+            storage_json_file = qoder_support_dir / "User/globalStorage/storage.json"
+            if storage_json_file.exists():
+                with open(storage_json_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                
+                machine_id_hash = hashlib.sha256(new_machine_id.encode()).hexdigest()
+                data['telemetry.machineId'] = machine_id_hash
+                data['machineId'] = machine_id_hash
+                
+                with open(storage_json_file, 'w', encoding='utf-8') as f:
+                    json.dump(data, f, indent=4, ensure_ascii=False)
+                
+                self.log(f"遥测机器ID: {machine_id_hash[:16]}...")
+            
+            QMessageBox.information(self, "成功", "机器ID重置完成")
 
         except Exception as e:
             self.log(f"重置机器ID失败: {e}")
@@ -1253,8 +1321,10 @@ class QoderResetGUI(QMainWindow):
                                    f"• 清理缓存数据\n"
                                    f"• 清理身份识别文件 (Cookies, 网络状态等)\n"
                                    f"• 执行高级身份清理 (SharedClientCache 等)\n"
+                                   f"• 🔐 登录身份清理 (清除认证令牌、登录状态)\n"
+                                   f"• 🔥 硬件指纹重置 (生成虚假硬件信息)\n"
                                    f"• {chat_action}\n\n"
-                                   f"这是最全面的重置方案，确定继续吗？",
+                                   f"这是最全面的反检测重置方案，确定继续吗？",
                                    QMessageBox.Yes | QMessageBox.No)
         if reply != QMessageBox.Yes:
             self.log("用户取消一键修改")
@@ -1286,14 +1356,27 @@ class QoderResetGUI(QMainWindow):
         if not qoder_support_dir.exists():
             raise Exception("未找到 Qoder 应用数据目录")
 
-        # 1. 重置机器ID
+        # 1. 重置机器ID（增强版）
         self.log("1. 重置机器ID...")
+        # 主机器ID文件
         machine_id_file = qoder_support_dir / "machineid"
-        if machine_id_file.exists():
+        if machine_id_file.exists() or True:  # 总是创建
             new_machine_id = str(uuid.uuid4())
             with open(machine_id_file, 'w') as f:
                 f.write(new_machine_id)
-            self.log("   机器ID已重置")
+            self.log("   主机器ID已重置")
+        
+        # 增强：创建多个可能的机器ID文件
+        additional_id_files = [
+            "deviceid", "hardware_uuid", "system_uuid", 
+            "platform_id", "installation_id"
+        ]
+        for id_file in additional_id_files:
+            file_path = qoder_support_dir / id_file
+            new_id = str(uuid.uuid4())
+            with open(file_path, 'w') as f:
+                f.write(new_id)
+            self.log(f"   已创建: {id_file}")
 
         # 2. 重置遥测数据
         self.log("2. 重置遥测数据...")
@@ -1307,10 +1390,31 @@ class QoderResetGUI(QMainWindow):
             device_id = str(uuid.uuid4())
             sqm_id = str(uuid.uuid4())  # 新增：软件质量度量ID
 
-            # 重置所有遥测相关的标识符
+            # 重置所有遥测相关的标识符（增强版）
             data['telemetry.machineId'] = machine_id_hash
             data['telemetry.devDeviceId'] = device_id
             data['telemetry.sqmId'] = sqm_id
+            
+            # 新增：重置更多可能的硬件指纹标识符
+            data['telemetry.sessionId'] = str(uuid.uuid4())
+            data['telemetry.installationId'] = str(uuid.uuid4())
+            data['telemetry.clientId'] = str(uuid.uuid4())
+            data['telemetry.userId'] = str(uuid.uuid4())
+            data['telemetry.anonymousId'] = str(uuid.uuid4())
+            data['machineId'] = machine_id_hash  # 备用机器ID
+            data['deviceId'] = device_id  # 备用设备ID
+            data['installationId'] = str(uuid.uuid4())  # 安装ID
+            data['hardwareId'] = str(uuid.uuid4())  # 硬件ID
+            data['platformId'] = str(uuid.uuid4())  # 平台ID
+            
+            # 重置系统指纹相关配置
+            data['system.platform'] = 'darwin'  # 保持平台一致但重置其他
+            data['system.arch'] = platform.machine()  # 重置架构信息
+            data['system.version'] = f"{random.randint(10, 15)}.{random.randint(0, 9)}.{random.randint(0, 9)}"
+            
+            self.log(f"   新会话ID: {data['telemetry.sessionId'][:16]}...")
+            self.log(f"   新安装ID: {data['telemetry.installationId'][:16]}...")
+            self.log(f"   新硬件ID: {data['hardwareId'][:16]}...")
             
             # 清除其他可能的身份识别配置（保留对话时不清除）
             if not preserve_chat:
@@ -1337,11 +1441,15 @@ class QoderResetGUI(QMainWindow):
             self.log(f"   新设备ID: {device_id}")
             self.log(f"   新SQM ID: {sqm_id}")
 
-        # 3. 清理缓存
+        # 3. 清理缓存（增强版）
         self.log("3. 清理缓存数据...")
         cache_dirs = [
             "Cache", "blob_storage", "Code Cache", "SharedClientCache",
-            "GPUCache", "DawnGraphiteCache", "DawnWebGPUCache"
+            "GPUCache", "DawnGraphiteCache", "DawnWebGPUCache",
+            # 新增：更多可能包含指纹的缓存
+            "ShaderCache", "DawnCache", "Dictionaries",
+            "CachedData", "CachedProfilesData", "CachedExtensions",
+            "IndexedDB", "CacheStorage", "WebSQL"
         ]
 
         cleaned = 0
@@ -1356,7 +1464,7 @@ class QoderResetGUI(QMainWindow):
 
         self.log(f"   已清理 {cleaned} 个缓存目录")
         
-        # 4. 清理身份识别文件（新增）
+        # 4. 清理身份识别文件（增强版）
         self.log("4. 清理身份识别文件...")
         identity_files = [
             "Network Persistent State",  # 网络服务器连接历史和指纹
@@ -1364,11 +1472,24 @@ class QoderResetGUI(QMainWindow):
             "Trust Tokens", "Trust Tokens-journal",  # 信任令牌数据库
             "SharedStorage", "SharedStorage-wal",  # 共享存储数据库
             "Preferences",  # 用户偏好设置（可能包含指纹）
+            "Secure Preferences",  # 安全偏好设置
             "Login Credentials",  # 登录凭据（如果存在）
             "Web Data", "Web Data-journal",  # Web数据数据库（如果存在）
             "cert_transparency_reporter_state.json",  # 证书透明度状态
             "Local State",  # Chromium本地状态（包含加密密钥）
-            "NetworkDataMigrated"  # 网络数据迁移标记
+            "NetworkDataMigrated",  # 网络数据迁移标记
+            # 新增：硬件指纹相关文件
+            "DeviceMetadata", "HardwareInfo", "SystemInfo",
+            "QuotaManager", "QuotaManager-journal",
+            "origin_bound_certs", "Network Action Predictor",
+            "AutofillStrikeDatabase", "AutofillStrikeDatabase-journal",
+            "Feature Engagement Tracker", "PasswordStoreDefault",
+            "PreferredApps", "UserPrefs", "UserPrefs.backup",
+            "Platform Notifications", "VideoDecodeStats",
+            "OriginTrials", "BrowserMetrics", "SafeBrowsing",
+            "Visited Links", "History", "History-journal",
+            "Favicons", "Favicons-journal", "Shortcuts", "Shortcuts-journal",
+            "Top Sites", "Top Sites-journal"
         ]
         
         identity_cleaned = 0
@@ -1430,12 +1551,20 @@ class QoderResetGUI(QMainWindow):
         self.log("5. 执行高级身份清理...")
         self.perform_advanced_identity_cleanup(qoder_support_dir, preserve_chat)
 
-        # 6. 处理对话记录
+        # 6. 执行登录身份清理（新增 - 清理登录状态）
+        self.log("6. 执行登录身份清理...")
+        self.perform_login_identity_cleanup(qoder_support_dir)
+
+        # 7. 执行硬件指纹重置（新增 - 最强反检测）
+        self.log("7. 执行硬件指纹重置...")
+        self.perform_hardware_fingerprint_reset(qoder_support_dir)
+
+        # 8. 处理对话记录
         if preserve_chat:
-            self.log("6. 保留对话记录...")
+            self.log("8. 保留对话记录...")
             self.log("   对话记录已保留")
         else:
-            self.log("6. 清除对话记录...")
+            self.log("8. 清除对话记录...")
             self.clear_chat_history(qoder_support_dir)
 
     def perform_advanced_identity_cleanup(self, qoder_support_dir, preserve_chat=False):
@@ -1689,6 +1818,411 @@ class QoderResetGUI(QMainWindow):
         """打开GitHub链接"""
         self.log("打开GitHub链接...")
         webbrowser.open("https://github.com/itandelin/qoder-free")
+    
+    def hardware_fingerprint_reset(self):
+        """硬件指纹重置功能（增强防检测）"""
+        self.log("开始硬件指纹重置...")
+
+        # 检查Qoder是否在运行
+        is_running, pids = self.check_qoder_running()
+        if is_running:
+            reply = QMessageBox.question(self, "检测到 Qoder 正在运行",
+                                       f"检测到 Qoder 正在运行 (PID: {', '.join(pids)})\n\n"
+                                       "硬件指纹重置需要先关闭 Qoder。\n"
+                                       "请手动关闭后点击'Yes'继续。",
+                                       QMessageBox.Yes | QMessageBox.No)
+            if reply != QMessageBox.Yes:
+                self.log("用户取消操作")
+                return
+
+            # 再次检查
+            is_running, _ = self.check_qoder_running()
+            if is_running:
+                self.log("Qoder 仍在运行，操作取消")
+                QMessageBox.critical(self, "错误", "请先完全关闭 Qoder 应用程序")
+                return
+
+        # 确认操作
+        reply = QMessageBox.question(self, "确认硬件指纹重置",
+                                   f"🔥 硬件指纹重置将：\n\n"
+                                   f"• 重置所有硬件相关标识符\n"
+                                   f"• 清除GPU、CPU、内存指纹\n"
+                                   f"• 清除系统信息和平台标识\n"
+                                   f"• 重置所有遥测和设备ID\n"
+                                   f"• 清除所有硬件相关缓存\n"
+                                   f"• 生成虚假硬件信息干扰检测\n\n"
+                                   f"📝 这是最强的硬件指纹重置，确定继续吗？",
+                                   QMessageBox.Yes | QMessageBox.No)
+        if reply != QMessageBox.Yes:
+            self.log("用户取消硬件指纹重置")
+            return
+
+        try:
+            qoder_support_dir = self.get_qoder_data_dir()
+            
+            if not qoder_support_dir.exists():
+                raise Exception("未找到 Qoder 应用数据目录")
+            
+            self.log("=" * 40)
+            self.log("开始硬件指纹重置")
+            self.log("=" * 40)
+            
+            # 执行硬件指纹重置
+            self.perform_hardware_fingerprint_reset(qoder_support_dir)
+            
+            self.log("=" * 40)
+            self.log("硬件指纹重置完成！")
+            self.log("=" * 40)
+            
+            QMessageBox.information(self, "完成", "硬件指纹重置完成！\n建议重启系统后再使用 Qoder。")
+            
+        except Exception as e:
+            self.log(f"硬件指纹重置失败: {e}")
+            QMessageBox.critical(self, "错误", f"硬件指纹重置失败: {e}")
+    
+    def perform_hardware_fingerprint_reset(self, qoder_support_dir):
+        """执行硬件指纹重置的具体实现"""
+        try:
+            self.log("开始硬件指纹重置...")
+            reset_count = 0
+            
+            # 1. 重置所有可能的机器标识符
+            self.log("1. 重置所有机器标识符...")
+            machine_id_files = [
+                "machineid", "deviceid", "hardware_uuid", "system_uuid",
+                "platform_id", "installation_id", "cpu_id", "gpu_id",
+                "board_serial", "bios_uuid", "memory_id"
+            ]
+            
+            for id_file in machine_id_files:
+                file_path = qoder_support_dir / id_file
+                new_id = str(uuid.uuid4())
+                try:
+                    with open(file_path, 'w') as f:
+                        f.write(new_id)
+                    self.log(f"   ✅ 已重置: {id_file}")
+                    reset_count += 1
+                except Exception as e:
+                    self.log(f"   ⚠️  重置失败 {id_file}: {e}")
+            
+            # 2. 重置 storage.json 中的所有硬件相关标识符
+            self.log("2. 重置 storage.json 中的硬件标识符...")
+            storage_file = qoder_support_dir / "User/globalStorage/storage.json"
+            if storage_file.exists():
+                try:
+                    with open(storage_file, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                    
+                    # 生成全新的硬件标识符
+                    hardware_identifiers = {
+                        # 核心硬件标识符
+                        'telemetry.machineId': hashlib.sha256(str(uuid.uuid4()).encode()).hexdigest(),
+                        'telemetry.devDeviceId': str(uuid.uuid4()),
+                        'telemetry.sqmId': str(uuid.uuid4()),
+                        'telemetry.sessionId': str(uuid.uuid4()),
+                        'telemetry.installationId': str(uuid.uuid4()),
+                        'telemetry.clientId': str(uuid.uuid4()),
+                        'telemetry.userId': str(uuid.uuid4()),
+                        'telemetry.anonymousId': str(uuid.uuid4()),
+                        
+                        # 备用标识符
+                        'machineId': hashlib.sha256(str(uuid.uuid4()).encode()).hexdigest(),
+                        'deviceId': str(uuid.uuid4()),
+                        'installationId': str(uuid.uuid4()),
+                        'hardwareId': str(uuid.uuid4()),
+                        'platformId': str(uuid.uuid4()),
+                        'cpuId': str(uuid.uuid4()),
+                        'gpuId': str(uuid.uuid4()),
+                        'memoryId': str(uuid.uuid4()),
+                        
+                        # 系统指纹
+                        'system.platform': 'darwin',
+                        'system.arch': platform.machine(),
+                        'system.version': f"{random.randint(10, 15)}.{random.randint(0, 9)}.{random.randint(0, 9)}",
+                        'system.build': f"{random.randint(20000, 25000)}",
+                        'system.locale': 'en-US',
+                        'system.timezone': 'America/New_York'  # 随机时区
+                    }
+                    
+                    # 更新所有标识符
+                    for key, value in hardware_identifiers.items():
+                        data[key] = value
+                        self.log(f"   ✅ 已重置: {key}")
+                    
+                    # 清除其他可能的硬件指纹配置
+                    hardware_keys_to_remove = []
+                    for key in data.keys():
+                        if any(keyword in key.lower() for keyword in [
+                            'hardware', 'cpu', 'gpu', 'memory', 'disk', 'serial',
+                            'mac', 'network', 'screen', 'resolution', 'vendor',
+                            'model', 'brand', 'manufacturer', 'processor'
+                        ]):
+                            if key not in hardware_identifiers:  # 不删除已更新的键
+                                hardware_keys_to_remove.append(key)
+                    
+                    for key in hardware_keys_to_remove:
+                        del data[key]
+                        self.log(f"   ✅ 已清除硬件指纹: {key}")
+                    
+                    with open(storage_file, 'w', encoding='utf-8') as f:
+                        json.dump(data, f, indent=4, ensure_ascii=False)
+                    
+                    reset_count += len(hardware_identifiers) + len(hardware_keys_to_remove)
+                    self.log(f"   ✅ storage.json 硬件标识符重置完成")
+                    
+                except Exception as e:
+                    self.log(f"   ⚠️  storage.json 处理失败: {e}")
+            
+            # 3. 清理硬件指纹相关文件
+            self.log("3. 清理硬件指纹相关文件...")
+            hardware_files = [
+                "DeviceMetadata", "HardwareInfo", "SystemInfo",
+                "GPUCache", "GPUInfo", "DawnGraphiteCache", "DawnWebGPUCache",
+                "ShaderCache", "VideoDecodeStats", "MediaCache",
+                "Platform Notifications", "Dictionaries",
+                "QuotaManager", "QuotaManager-journal",
+                "OriginTrials", "BrowserMetrics",
+                # 新增：更多硬件检测文件
+                "hardware_detection.json", "device_capabilities.json",
+                "system_features.json", "platform_detection.dat",
+                "cpu_features.json", "gpu_features.json",
+                "memory_info.json", "display_info.json"
+            ]
+            
+            for hardware_file in hardware_files:
+                file_path = qoder_support_dir / hardware_file
+                if file_path.exists():
+                    try:
+                        if file_path.is_dir():
+                            shutil.rmtree(file_path)
+                        else:
+                            file_path.unlink()
+                        self.log(f"   ✅ 已清除: {hardware_file}")
+                        reset_count += 1
+                    except Exception as e:
+                        self.log(f"   ⚠️  清除失败 {hardware_file}: {e}")
+            
+            # 4. 清理硬件相关缓存
+            self.log("4. 清理硬件相关缓存...")
+            hardware_cache_dirs = [
+                "GPUCache", "DawnGraphiteCache", "DawnWebGPUCache",
+                "ShaderCache", "DawnCache", "MediaCache",
+                "CachedData", "CachedProfilesData"
+            ]
+            
+            for cache_dir in hardware_cache_dirs:
+                dir_path = qoder_support_dir / cache_dir
+                if dir_path.exists():
+                    try:
+                        shutil.rmtree(dir_path)
+                        self.log(f"   ✅ 已清理缓存: {cache_dir}")
+                        reset_count += 1
+                    except Exception as e:
+                        self.log(f"   ⚠️  清理失败 {cache_dir}: {e}")
+            
+            # 5. 创建虚假硬件信息文件（干扰检测）
+            self.log("5. 创建虚假硬件信息...")
+            try:
+                # 根据系统类型生成相应的虚假硬件信息
+                system_type = platform.system()
+                self.log(f"   检测到系统类型: {system_type}")
+                
+                if system_type == "Darwin":  # macOS
+                    fake_hardware_info = {
+                        "cpu": {
+                            "name": f"Apple M{random.randint(2, 5)} Pro",
+                            "cores": random.choice([8, 10, 12, 16]),
+                            "threads": random.choice([8, 10, 12, 16]),
+                            "frequency": f"{random.uniform(2.0, 4.0):.1f}GHz"
+                        },
+                        "gpu": {
+                            "name": f"Apple M{random.randint(2, 5)} Pro GPU",
+                            "memory": f"{random.choice([16, 24, 32])}GB",
+                            "cores": random.choice([16, 19, 24, 32])
+                        },
+                        "memory": {
+                            "total": f"{random.choice([16, 24, 32, 64])}GB",
+                            "type": "LPDDR5",
+                            "speed": f"{random.choice([6400, 7467])}MT/s"
+                        }
+                    }
+                elif system_type == "Windows":  # Windows
+                    cpu_brands = ["Intel", "AMD"]
+                    cpu_brand = random.choice(cpu_brands)
+                    
+                    if cpu_brand == "Intel":
+                        cpu_series = random.choice(["Core i5", "Core i7", "Core i9"])
+                        cpu_gen = random.randint(12, 14)
+                        cpu_model = f"{random.randint(600, 900)}{'K' if random.choice([True, False]) else ''}"
+                        cpu_name = f"Intel {cpu_series}-{cpu_gen}{cpu_model}"
+                    else:  # AMD
+                        cpu_series = random.choice(["Ryzen 5", "Ryzen 7", "Ryzen 9"])
+                        cpu_gen = random.randint(5000, 7000)
+                        cpu_name = f"AMD {cpu_series} {cpu_gen}X"
+                    
+                    gpu_brands = ["NVIDIA", "AMD", "Intel"]
+                    gpu_brand = random.choice(gpu_brands)
+                    
+                    if gpu_brand == "NVIDIA":
+                        gpu_series = random.choice(["RTX 4060", "RTX 4070", "RTX 4080", "RTX 4090"])
+                        gpu_name = f"NVIDIA GeForce {gpu_series}"
+                        gpu_memory = f"{random.choice([8, 12, 16, 24])}GB"
+                    elif gpu_brand == "AMD":
+                        gpu_series = random.choice(["RX 7600", "RX 7700 XT", "RX 7800 XT", "RX 7900 XTX"])
+                        gpu_name = f"AMD Radeon {gpu_series}"
+                        gpu_memory = f"{random.choice([8, 12, 16, 20])}GB"
+                    else:  # Intel
+                        gpu_series = random.choice(["Arc A750", "Arc A770", "Iris Xe"])
+                        gpu_name = f"Intel {gpu_series}"
+                        gpu_memory = f"{random.choice([8, 12, 16])}GB"
+                    
+                    fake_hardware_info = {
+                        "cpu": {
+                            "name": cpu_name,
+                            "cores": random.choice([6, 8, 12, 16, 24]),
+                            "threads": random.choice([12, 16, 20, 24, 32]),
+                            "frequency": f"{random.uniform(3.0, 5.0):.1f}GHz"
+                        },
+                        "gpu": {
+                            "name": gpu_name,
+                            "memory": gpu_memory,
+                            "cores": random.choice([1024, 1536, 2048, 2560])
+                        },
+                        "memory": {
+                            "total": f"{random.choice([16, 24, 32])}GB",
+                            "type": "LPDDR5",
+                            "speed": f"{random.choice([4266, 5500, 6400])}MHz"
+                        }
+                    }
+                elif system_type == "Windows":  # Windows
+                    cpu_brands = ["Intel", "AMD"]
+                    cpu_brand = random.choice(cpu_brands)
+                    
+                    if cpu_brand == "Intel":
+                        # Intel 处理器
+                        generations = ["12th", "13th", "14th"]
+                        gen = random.choice(generations)
+                        cpu_num = random.randint(12400, 14900)
+                        cpu_name = f"Intel Core i{random.choice([5, 7, 9])}-{cpu_num}"
+                    else:
+                        # AMD 处理器
+                        series = random.choice(["5000", "7000", "9000"])
+                        cpu_num = random.randint(5600, 9950)
+                        cpu_name = f"AMD Ryzen {random.choice([5, 7, 9])} {cpu_num}X"
+                    
+                    # Windows 显卡选择
+                    gpu_options = [
+                        "NVIDIA GeForce RTX 4060",
+                        "NVIDIA GeForce RTX 4070", 
+                        "NVIDIA GeForce RTX 4080",
+                        "AMD Radeon RX 7600",
+                        "AMD Radeon RX 7700 XT",
+                        "AMD Radeon RX 7800 XT",
+                        "Intel Arc A770",
+                        "Intel UHD Graphics 770"
+                    ]
+                    
+                    fake_hardware_info = {
+                        "cpu": {
+                            "name": cpu_name,
+                            "cores": random.choice([6, 8, 12, 16, 20]),
+                            "threads": random.choice([12, 16, 20, 24, 32]),
+                            "frequency": f"{random.uniform(3.0, 5.5):.1f}GHz"
+                        },
+                        "gpu": {
+                            "name": random.choice(gpu_options),
+                            "memory": f"{random.choice([8, 12, 16, 24])}GB",
+                            "driver_version": f"{random.randint(530, 560)}.{random.randint(60, 99)}"
+                        },
+                        "memory": {
+                            "total": f"{random.choice([16, 32, 64, 128])}GB",
+                            "type": random.choice(["DDR4", "DDR5"]),
+                            "speed": f"{random.choice([3200, 3600, 4800, 5600])}MHz"
+                        }
+                    }
+                else:  # Linux 或其他系统
+                    cpu_brands = ["Intel", "AMD"]
+                    cpu_brand = random.choice(cpu_brands)
+                    
+                    if cpu_brand == "Intel":
+                        cpu_name = f"Intel Core i{random.choice([5, 7, 9])}-{random.randint(10400, 13900)}K"
+                    else:
+                        cpu_name = f"AMD Ryzen {random.choice([5, 7, 9])} {random.randint(5600, 7900)}X"
+                    
+                    fake_hardware_info = {
+                        "cpu": {
+                            "name": cpu_name,
+                            "cores": random.choice([4, 6, 8, 12, 16]),
+                            "threads": random.choice([8, 12, 16, 24, 32]),
+                            "frequency": f"{random.uniform(2.5, 4.8):.1f}GHz"
+                        },
+                        "gpu": {
+                            "name": random.choice(["NVIDIA GeForce RTX 4060", "AMD Radeon RX 7600", "Intel Arc A750"]),
+                            "memory": f"{random.choice([4, 8, 12, 16])}GB",
+                            "cores": random.choice([896, 1024, 1408, 1792])
+                        },
+                        "memory": {
+                            "total": f"{random.choice([8, 16, 32])}GB",
+                            "type": random.choice(["DDR4", "DDR5"]),
+                            "speed": f"{random.choice([2666, 3200, 3600])}MHz"
+                        }
+                    }
+                
+                # 添加通用的显示和系统信息
+                if system_type == "Darwin":
+                    display_resolutions = ["2560x1440", "3024x1964", "3456x2234", "5120x2880"]
+                elif system_type == "Windows":
+                    display_resolutions = ["1920x1080", "2560x1440", "3440x1440", "3840x2160"]
+                else:
+                    display_resolutions = ["1920x1080", "2560x1440", "1366x768", "3840x2160"]
+                
+                fake_hardware_info.update({
+                    "display": {
+                        "resolution": random.choice(display_resolutions),
+                        "scale": random.choice([1.0, 1.25, 1.5, 2.0]),
+                        "refresh_rate": random.choice([60, 75, 120, 144, 165])
+                    },
+                    "system": {
+                        "platform": system_type.lower(),
+                        "arch": platform.machine(),
+                        "version": self.generate_system_version(system_type)
+                    },
+                    "fingerprint_reset": {
+                        "timestamp": datetime.now().isoformat(),
+                        "version": "2.2.1-enhanced",
+                        "reset_id": str(uuid.uuid4()),
+                        "system_detected": system_type
+                    }
+                })
+                
+                # 写入多个虚假文件
+                fake_files = [
+                    "hardware_detection.json",
+                    "device_capabilities.json", 
+                    "system_features.json"
+                ]
+                
+                for fake_file in fake_files:
+                    file_path = qoder_support_dir / fake_file
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        json.dump(fake_hardware_info, f, indent=2, ensure_ascii=False)
+                    
+                    # 在 macOS 上设置为隐藏文件
+                    try:
+                        subprocess.run(['chflags', 'hidden', str(file_path)], check=False)
+                    except:
+                        pass
+                    
+                    self.log(f"   ✅ 已创建虚假信息: {fake_file}")
+                    reset_count += 1
+                
+            except Exception as e:
+                self.log(f"   ⚠️  创建虚假信息失败: {e}")
+            
+            self.log(f"   硬件指纹重置完成，处理了 {reset_count} 个项目")
+            
+        except Exception as e:
+            self.log(f"   硬件指纹重置失败: {e}")
 
 def main():
     app = QApplication(sys.argv)
