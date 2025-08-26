@@ -139,7 +139,7 @@ class QoderResetGUI(QMainWindow):
                 'clear_log': 'Очистить журнал',
                 'github': 'Github',
                 'language': 'Язык',
-                
+
                 # Log messages
                 'tool_started': 'Инструмент сброса Qoder-Free запущен',
                 'log_cleared': 'Журнал очищен',
@@ -153,7 +153,7 @@ class QoderResetGUI(QMainWindow):
                 'chat_directories_found': 'папок чата найдено',
                 'identity_files_found': 'файлов идентификации найдено',
                 'status_check_complete': 'Проверка статуса завершена, готов к работе',
-                
+
                 # Dialog messages
                 'qoder_detected_running': 'Обнаружен запущенный Qoder',
                 'please_close_qoder': 'Пожалуйста, закройте приложение Qoder вручную',
@@ -166,6 +166,50 @@ class QoderResetGUI(QMainWindow):
                 'success': 'Успех',
                 'warning': 'Предупреждение',
                 'status_check': 'Проверка статуса'
+            },
+            'pt-br': {  # Português (Brasil)
+                'window_title': 'Qoder-Free',
+                'intro_text': 'Qoder-Free é principalmente usado para redefinir as informações de identidade do usuário do aplicativo Qoder',
+                'operation_area': 'Área de Operações:',
+                'one_click_config': 'Configuração com um clique',
+                'close_qoder': 'Fechar Qoder',
+                'reset_machine_id': 'Redefinir ID da Máquina',
+                'reset_telemetry': 'Redefinir Telemetria',
+                'deep_identity_clean': 'Limpeza Profunda de Identidade',
+                'login_identity_clean': 'Limpar Login',
+                'advanced_options': 'Opções Avançadas',
+                'preserve_chat': 'Preservar Histórico do chat',
+                'operation_log': 'Log de Operações:',
+                'clear_log': 'Limpar Log',
+                'github': 'Github',
+                'language': 'Idioma',
+
+                # Log messages
+                'tool_started': 'Ferramenta de redefinição Qoder-Free iniciada',
+                'log_cleared': 'Log limpo',
+                'qoder_running': 'Qoder está em execução',
+                'qoder_not_running': 'Qoder não está em execução',
+                'qoder_directory_exists': 'Diretório Qoder existe',
+                'machine_id': 'ID da Máquina',
+                'telemetry_machine_id': 'ID da Máquina de Telemetria',
+                'device_id': 'ID do Dispositivo',
+                'cache_directories_found': 'diretórios de cache encontrados',
+                'chat_directories_found': 'diretórios relacionados ao chat encontrados',
+                'identity_files_found': 'arquivos de identidade encontrados',
+                'status_check_complete': 'Verificação de status concluída, pronto para operar',
+
+                # Dialog messages
+                'qoder_detected_running': 'Qoder Detectado em Execução',
+                'please_close_qoder': 'Por favor, feche o aplicativo Qoder manualmente',
+                'confirm_one_click': 'Confirmar Redefinição com um clique',
+                'confirm_deep_clean': 'Confirmar Limpeza Profunda',
+                'confirm_login_clean': 'Confirmar Limpeza de Identidade de Login',
+                'operation_complete': 'Operação Concluída',
+                'operation_failed': 'Operação Falhou',
+                'error': 'Erro',
+                'success': 'Sucesso',
+                'warning': 'Aviso',
+                'status_check': 'Verificação de Status'
             }
         }
     
@@ -205,7 +249,7 @@ class QoderResetGUI(QMainWindow):
         
         # 语言下拉框
         self.language_combo = QComboBox()
-        self.language_combo.addItems(['中文', 'English', 'Русский'])
+        self.language_combo.addItems(['中文', 'English', 'Русский', 'Português (BR)'])
         self.language_combo.setFixedSize(90, 25)
         self.language_combo.setStyleSheet("""
             QComboBox {
@@ -576,7 +620,8 @@ class QoderResetGUI(QMainWindow):
         language_map = {
             '中文': 'zh',
             'English': 'en',
-            'Русский': 'ru'
+            'Русский': 'ru',
+            'Português (BR)': 'pt-br'
         }
         
         new_language = language_map.get(language_text, 'zh')
@@ -629,6 +674,18 @@ class QoderResetGUI(QMainWindow):
         self.log_text.clear()
         self.log(self.tr('log_cleared'))
 
+    def get_qoder_data_dir(self):
+        """获取Qoder数据目录路径（跨平台支持）"""
+        home_dir = Path.home()
+        system = platform.system()
+
+        if system == "Windows":
+            # Windows: %APPDATA%\Qoder
+            return home_dir / "AppData" / "Roaming" / "Qoder"
+        else:
+            # 默认使用macOS路径作为fallback
+            return home_dir / "Library" / "Application Support" / "Qoder"
+
     def initialize_status_check(self):
         """初始化时检查各项状态"""
         try:
@@ -642,8 +699,7 @@ class QoderResetGUI(QMainWindow):
 
             # 2. 检查Qoder目录
             self.log("2. 检查Qoder目录...")
-            home_dir = Path.home()
-            qoder_support_dir = home_dir / "Library/Application Support/Qoder"
+            qoder_support_dir = self.get_qoder_data_dir()
 
             if qoder_support_dir.exists():
                 self.log(f"   ✅ Qoder目录存在")
@@ -874,8 +930,7 @@ class QoderResetGUI(QMainWindow):
             return
 
         try:
-            home_dir = Path.home()
-            qoder_support_dir = home_dir / "Library/Application Support/Qoder"
+            qoder_support_dir = self.get_qoder_data_dir()
             
             if not qoder_support_dir.exists():
                 raise Exception("未找到 Qoder 应用数据目录")
@@ -1069,8 +1124,7 @@ class QoderResetGUI(QMainWindow):
             return
 
         try:
-            home_dir = Path.home()
-            qoder_support_dir = home_dir / "Library/Application Support/Qoder"
+            qoder_support_dir = self.get_qoder_data_dir()
             
             if not qoder_support_dir.exists():
                 raise Exception("未找到 Qoder 应用数据目录")
@@ -1104,8 +1158,7 @@ class QoderResetGUI(QMainWindow):
             return
 
         try:
-            home_dir = Path.home()
-            qoder_support_dir = home_dir / "Library/Application Support/Qoder"
+            qoder_support_dir = self.get_qoder_data_dir()
             machine_id_file = qoder_support_dir / "machineid"
 
             if not qoder_support_dir.exists():
@@ -1137,8 +1190,7 @@ class QoderResetGUI(QMainWindow):
             return
 
         try:
-            home_dir = Path.home()
-            qoder_support_dir = home_dir / "Library/Application Support/Qoder"
+            qoder_support_dir = self.get_qoder_data_dir()
             storage_json_file = qoder_support_dir / "User/globalStorage/storage.json"
 
             if not storage_json_file.exists():
@@ -1229,8 +1281,7 @@ class QoderResetGUI(QMainWindow):
 
     def perform_full_reset(self, preserve_chat=True):
         """执行完整重置"""
-        home_dir = Path.home()
-        qoder_support_dir = home_dir / "Library/Application Support/Qoder"
+        qoder_support_dir = self.get_qoder_data_dir()
 
         if not qoder_support_dir.exists():
             raise Exception("未找到 Qoder 应用数据目录")
