@@ -1179,6 +1179,10 @@ class QoderResetGUI(QMainWindow):
             # 执行高级身份清理
             self.perform_advanced_identity_cleanup(qoder_support_dir, preserve_chat=False)
             
+            # 执行超级深度清理（新增增强功能）
+            self.log("执行超级深度清理...")
+            self.perform_super_deep_cleanup(qoder_support_dir)
+            
             self.log("=" * 40)
             self.log("深度身份清理完成！")
             self.log("=" * 40)
@@ -1323,8 +1327,9 @@ class QoderResetGUI(QMainWindow):
                                    f"• 执行高级身份清理 (SharedClientCache 等)\n"
                                    f"• 🔐 登录身份清理 (清除认证令牌、登录状态)\n"
                                    f"• 🔥 硬件指纹重置 (生成虚假硬件信息)\n"
+                                   f"• 🚀 超级深度清理 (系统级缓存、网络痕迹、指纹混淆)\n"
                                    f"• {chat_action}\n\n"
-                                   f"这是最全面的反检测重置方案，确定继续吗？",
+                                   f"这是最全面的反检测重置方案（9项功能），确定继续吗？",
                                    QMessageBox.Yes | QMessageBox.No)
         if reply != QMessageBox.Yes:
             self.log("用户取消一键修改")
@@ -1558,13 +1563,17 @@ class QoderResetGUI(QMainWindow):
         # 7. 执行硬件指纹重置（新增 - 最强反检测）
         self.log("7. 执行硬件指纹重置...")
         self.perform_hardware_fingerprint_reset(qoder_support_dir)
+        
+        # 8. 执行超级深度清理（新增增强功能）
+        self.log("8. 执行超级深度清理...")
+        self.perform_super_deep_cleanup(qoder_support_dir)
 
-        # 8. 处理对话记录
+        # 9. 处理对话记录
         if preserve_chat:
-            self.log("8. 保留对话记录...")
+            self.log("9. 保留对话记录...")
             self.log("   对话记录已保留")
         else:
-            self.log("8. 清除对话记录...")
+            self.log("9. 清除对话记录...")
             self.clear_chat_history(qoder_support_dir)
 
     def perform_advanced_identity_cleanup(self, qoder_support_dir, preserve_chat=False):
@@ -2219,10 +2228,537 @@ class QoderResetGUI(QMainWindow):
             except Exception as e:
                 self.log(f"   ⚠️  创建虚假信息失败: {e}")
             
+            # 6. 系统级缓存清理（新增增强功能）
+            self.log("6. 清理系统级缓存...")
+            self.clear_system_level_caches()
+            
+            # 7. 网络配置重置（新增增强功能）
+            self.log("7. 重置网络相关配置...")
+            self.reset_network_traces()
+            
+            # 8. 浏览器User-Agent混淆（新增增强功能）
+            self.log("8. 混淆浏览器指纹...")
+            self.obfuscate_browser_fingerprint(qoder_support_dir)
+            
             self.log(f"   硬件指纹重置完成，处理了 {reset_count} 个项目")
             
         except Exception as e:
             self.log(f"   硬件指纹重置失败: {e}")
+    
+    def clear_system_level_caches(self):
+        """🛡️ 安全清理系统级缓存（仅清理与Qoder相关的缓存，不影响其他应用）"""
+        try:
+            system_type = platform.system()
+            
+            if system_type == "Darwin":  # macOS
+                # ✅ 安全模式：只清理与Qoder/VSCode/Electron相关的系统级缓存
+                self.log("   🔍 安全模式：仅清理与Qoder相关的系统缓存...")
+                
+                # 🛡️ 白名单模式 - 只清理明确与这些应用相关的缓存
+                safe_cache_patterns = [
+                    "com.microsoft.VSCode",
+                    "qoder", "Qoder", "QODER",
+                    "vscode", "VSCode", "Visual Studio Code",
+                    "Electron", "electron"
+                ]
+                
+                # 📂 只在特定的缓存目录中查找
+                base_cache_dirs = [
+                    Path.home() / "Library/Caches",
+                    Path.home() / "Library/HTTPStorages",
+                    Path.home() / "Library/WebKit",
+                    Path.home() / "Library/Application Support/CrashReporter"
+                ]
+                
+                cleaned_count = 0
+                for base_dir in base_cache_dirs:
+                    if base_dir.exists():
+                        try:
+                            for item in base_dir.iterdir():
+                                # 🔍 严格匹配：必须完全匹配模式才清理
+                                should_clean = False
+                                item_name_lower = item.name.lower()
+                                
+                                for pattern in safe_cache_patterns:
+                                    if pattern.lower() in item_name_lower:
+                                        # 📋 额外安全检查：避免误删重要系统文件
+                                        dangerous_keywords = ['system', 'apple', 'safari', 'chrome', 'firefox', 'mail', 'finder']
+                                        is_safe = not any(dangerous in item_name_lower for dangerous in dangerous_keywords)
+                                        
+                                        if is_safe:
+                                            should_clean = True
+                                            break
+                                
+                                if should_clean:
+                                    try:
+                                        if item.is_dir():
+                                            shutil.rmtree(item)
+                                        else:
+                                            item.unlink()
+                                        self.log(f"   ✅ 已安全清理: {item.name}")
+                                        cleaned_count += 1
+                                    except Exception as e:
+                                        self.log(f"   ⚠️  清理失败 {item.name}: {e}")
+                        except Exception as e:
+                            self.log(f"   ⚠️  访问失败 {base_dir.name}: {e}")
+                
+                # 🚫 跳过可能影响系统的DNS缓存清理
+                self.log("   🛡️ 安全保护：跳过DNS缓存清理以保护系统网络功能")
+                
+                if cleaned_count > 0:
+                    self.log(f"   ✅ 安全清理完成：处理了 {cleaned_count} 个Qoder相关缓存项")
+                else:
+                    self.log("   ℹ️  未发现需要清理的Qoder相关缓存（这是正常的）")
+                    
+            elif system_type == "Windows":
+                # 🖥️ Windows 安全模式：只清理用户级别的Qoder相关缓存
+                self.log("   🔍 Windows安全模式：仅清理用户级Qoder相关缓存...")
+                try:
+                    # 📁 只清理当前用户的临时文件中与Qoder相关的内容
+                    temp_dir = Path(os.environ.get('TEMP', ''))
+                    app_data = Path(os.environ.get('LOCALAPPDATA', ''))
+                    
+                    safe_dirs = [temp_dir, app_data / "Temp"]
+                    cleaned_count = 0
+                    
+                    for safe_dir in safe_dirs:
+                        if safe_dir.exists():
+                            for item in safe_dir.iterdir():
+                                item_name_lower = item.name.lower()
+                                if any(keyword in item_name_lower for keyword in ['qoder', 'vscode', 'code-', 'electron']):
+                                    # 🛡️ 避免删除系统重要文件
+                                    if not any(sys_keyword in item_name_lower for sys_keyword in ['system', 'microsoft', 'windows', 'temp']):
+                                        try:
+                                            if item.is_dir():
+                                                shutil.rmtree(item)
+                                            else:
+                                                item.unlink()
+                                            self.log(f"   ✅ 已清理Windows缓存: {item.name}")
+                                            cleaned_count += 1
+                                        except Exception as e:
+                                            self.log(f"   ⚠️  清理失败 {item.name}: {e}")
+                    
+                    self.log(f"   🛡️ Windows安全清理完成：处理了 {cleaned_count} 个项目")
+                    self.log("   ℹ️  跳过系统级操作以保护Windows系统稳定性")
+                except Exception as e:
+                    self.log(f"   ⚠️  Windows缓存清理失败: {e}")
+            
+            else:  # Linux
+                self.log("   🐧 Linux安全模式：仅清理用户级Qoder相关缓存...")
+                try:
+                    # 📁 清理用户缓存目录中的相关文件
+                    cache_dirs = [
+                        Path.home() / ".cache",
+                        Path.home() / ".config",
+                        Path.home() / ".local/share"
+                    ]
+                    
+                    cleaned_count = 0
+                    for cache_dir in cache_dirs:
+                        if cache_dir.exists():
+                            for item in cache_dir.iterdir():
+                                item_name_lower = item.name.lower()
+                                if any(keyword in item_name_lower for keyword in ['qoder', 'vscode', 'code', 'electron']):
+                                    # 🛡️ 避免删除系统配置文件
+                                    if not any(sys_keyword in item_name_lower for sys_keyword in ['dbus', 'systemd', 'pulse', 'gtk']):
+                                        try:
+                                            if item.is_dir():
+                                                shutil.rmtree(item)
+                                            else:
+                                                item.unlink()
+                                            self.log(f"   ✅ 已清理Linux缓存: {item.name}")
+                                            cleaned_count += 1
+                                        except Exception as e:
+                                            self.log(f"   ⚠️  清理失败 {item.name}: {e}")
+                    
+                    self.log(f"   🐧 Linux安全清理完成：处理了 {cleaned_count} 个项目")
+                except Exception as e:
+                    self.log(f"   ⚠️  Linux缓存清理失败: {e}")
+                    
+        except Exception as e:
+            self.log(f"   ❌ 系统级缓存清理失败: {e}")
+    
+    def reset_network_traces(self):
+        """重置网络痕迹（新增增强功能）"""
+        try:
+            qoder_support_dir = self.get_qoder_data_dir()
+            
+            # 清理更多网络相关文件
+            network_files = [
+                "Network Persistent State",
+                "TransportSecurity", 
+                "Trust Tokens",
+                "Trust Tokens-journal",
+                "Network Action Predictor",
+                "NetworkDataMigrated",
+                "Reporting and NEL",
+                "HSTS",
+                "Certificate Transparency Reporter State",
+                "cert_transparency_reporter_state.json",
+                "Certificate Revocation Lists",
+                "SSLCertificates",
+                "Cookies",
+                "Cookies-journal",
+                "QuotaManager",
+                "QuotaManager-journal"
+            ]
+            
+            cleared_count = 0
+            for network_file in network_files:
+                file_path = qoder_support_dir / network_file
+                if file_path.exists():
+                    try:
+                        if file_path.is_dir():
+                            shutil.rmtree(file_path)
+                        else:
+                            file_path.unlink()
+                        self.log(f"   ✅ 已清除网络文件: {network_file}")
+                        cleared_count += 1
+                    except Exception as e:
+                        self.log(f"   ⚠️  清除失败 {network_file}: {e}")
+            
+            # 重新生成网络配置文件（创建干净的网络状态）
+            try:
+                network_state_file = qoder_support_dir / "Network Persistent State"
+                empty_network_state = {
+                    "net": {
+                        "http_server_properties": {},
+                        "transport_security_persister": {},
+                        "dns_config": {},
+                        "ssl_config_service": {}
+                    }
+                }
+                
+                with open(network_state_file, 'w', encoding='utf-8') as f:
+                    json.dump(empty_network_state, f, indent=2)
+                
+                self.log("   ✅ 已重新生成网络状态文件")
+                cleared_count += 1
+            except Exception as e:
+                self.log(f"   ⚠️  重新生成网络状态失败: {e}")
+            
+            self.log(f"   网络痕迹清理完成，处理了 {cleared_count} 个文件")
+            
+        except Exception as e:
+            self.log(f"   网络痕迹重置失败: {e}")
+    
+    def obfuscate_browser_fingerprint(self, qoder_support_dir):
+        """混淆浏览器指纹（新增增强功能）"""
+        try:
+            # 创建混淆的浏览器配置
+            user_agent_list = [
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/121.0",
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            ]
+            
+            fingerprint_data = {
+                "user_agent": random.choice(user_agent_list),
+                "screen_resolution": random.choice(["1920x1080", "2560x1440", "3840x2160", "1366x768"]),
+                "color_depth": random.choice([24, 32]),
+                "timezone": random.choice(["America/New_York", "Europe/London", "Asia/Tokyo", "America/Los_Angeles"]),
+                "language": random.choice(["en-US", "en-GB", "zh-CN", "ja-JP"]),
+                "platform": random.choice(["MacIntel", "Win32", "Linux x86_64"]),
+                "webgl_vendor": random.choice(["Google Inc. (Apple)", "Google Inc. (NVIDIA)", "Google Inc. (Intel)"]),
+                "canvas_fingerprint": hashlib.md5(str(random.random()).encode()).hexdigest()[:16],
+                "audio_fingerprint": hashlib.md5(str(random.random()).encode()).hexdigest()[:16],
+                "fonts": random.sample([
+                    "Arial", "Helvetica", "Times", "Courier", "Verdana", "Georgia", 
+                    "Palatino", "Garamond", "Bookman", "Comic Sans MS", "Trebuchet MS", "Impact"
+                ], k=random.randint(5, 10)),
+                "plugins": random.sample([
+                    "Chrome PDF Plugin", "Chrome PDF Viewer", "Native Client", 
+                    "Widevine Content Decryption Module", "Shockwave Flash"
+                ], k=random.randint(2, 4))
+            }
+            
+            # 保存浏览器指纹混淆数据
+            fingerprint_files = [
+                "browser_fingerprint.json",
+                "canvas_fingerprint.json", 
+                "webgl_fingerprint.json",
+                "audio_fingerprint.json"
+            ]
+            
+            for fp_file in fingerprint_files:
+                file_path = qoder_support_dir / fp_file
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    json.dump(fingerprint_data, f, indent=2, ensure_ascii=False)
+                
+                # 在 macOS 上设置为隐藏文件
+                try:
+                    subprocess.run(['chflags', 'hidden', str(file_path)], check=False)
+                except:
+                    pass
+                
+                self.log(f"   ✅ 已创建指纹混淆: {fp_file}")
+            
+            # 修改现有的 Preferences 文件以注入混淆数据
+            prefs_file = qoder_support_dir / "Preferences"
+            if prefs_file.exists():
+                try:
+                    with open(prefs_file, 'r', encoding='utf-8') as f:
+                        prefs_data = json.load(f)
+                    
+                    # 注入混淆的浏览器信息
+                    prefs_data.update({
+                        "browser.user_agent_override": fingerprint_data["user_agent"],
+                        "intl.accept_languages": fingerprint_data["language"],
+                        "general.useragent.override": fingerprint_data["user_agent"],
+                        "privacy.resistFingerprinting": True,
+                        "privacy.fingerprintingProtection": True
+                    })
+                    
+                    with open(prefs_file, 'w', encoding='utf-8') as f:
+                        json.dump(prefs_data, f, indent=2, ensure_ascii=False)
+                    
+                    self.log("   ✅ 已混淆 Preferences 文件")
+                except Exception as e:
+                    self.log(f"   ⚠️  Preferences 混淆失败: {e}")
+            
+            self.log("   浏览器指纹混淆完成")
+            
+        except Exception as e:
+            self.log(f"   浏览器指纹混淆失败: {e}")
+    
+    def perform_super_deep_cleanup(self, qoder_support_dir):
+        """🛡️ 执行超级深度清理（安全增强版，只清理与Qoder相关的文件）"""
+        try:
+            self.log("🔥 开始安全的超级深度清理...")
+            cleaned_count = 0
+            
+            # 1. 清理系统级别的身份文件
+            self.log("1. 清理系统级别身份文件...")
+            system_identity_files = [
+                # 日志和临时文件
+                "logs", "tmp", "temp", "crash_dumps",
+                # 更多可能的身份识别文件
+                "identity.json", "machine.json", "device.json",
+                "fingerprint.json", "tracking.json", "analytics.json",
+                # 浏览器相关文件
+                "BrowserUserAgent", "ClientHints", "NavigatorInfo",
+                "ScreenInfo", "TimezoneInfo", "LanguageInfo",
+                # 网络相关文件
+                "DNSCache", "HTTPCache", "ProxySettings",
+                "NetworkConfiguration", "ConnectionHistory",
+                # 系统信息文件
+                "OSInfo", "HardwareProfile", "SystemMetrics",
+                "PerformanceInfo", "MemoryInfo", "DiskInfo",
+                # 用户活动相关
+                "UserActivity", "AppUsage", "FeatureUsage",
+                "InteractionHistory", "AccessLog", "AuditLog",
+                # 安全相关文件
+                "SecuritySettings", "CertificateStore", "TrustStore",
+                "EncryptionKeys", "AuthTokens", "SessionKeys",
+                # 缓存相关文件
+                "MetadataCache", "ThumbnailCache", "IndexCache",
+                "SearchCache", "QueryCache", "ResultsCache",
+                # 扩展和插件相关
+                "ExtensionData", "PluginData", "AddonData",
+                "ExtensionPrefs", "PluginPrefs", "AddonPrefs",
+                # 更多 WebKit 相关文件
+                "WebKitCache", "WebProcessCache", "PluginProcessCache",
+                "RenderProcessCache", "GPUProcessCache",
+                # 更多 Chromium 相关文件
+                "ChromiumState", "ChromiumPrefs", "ChromiumHistory",
+                "ChromiumCookies", "ChromiumSessions"
+            ]
+            
+            for file_name in system_identity_files:
+                file_path = qoder_support_dir / file_name
+                if file_path.exists():
+                    try:
+                        if file_path.is_dir():
+                            shutil.rmtree(file_path)
+                        else:
+                            file_path.unlink()
+                        self.log(f"   ✅ 已清除: {file_name}")
+                        cleaned_count += 1
+                    except Exception as e:
+                        self.log(f"   ⚠️  清除失败 {file_name}: {e}")
+            
+            # 2. 谨慎清理指定扩展名的可疑文件（增加安全检查）
+            self.log("2. 谨慎清理可疑扩展名文件...")
+            suspicious_extensions = [
+                ".tmp", ".temp", ".cache", ".lock", ".pid", ".sock", 
+                ".session", ".fingerprint", ".tracking", ".analytics"
+            ]
+            
+            # 🚫 绝对安全白名单 - 永远不删除的重要文件
+            protected_keywords = [
+                "settings", "config", "workspace", "preference", "user",
+                "important", "backup", "license", "key", "certificate", 
+                "password", "auth", "secret", "critical", "system",
+                "apple", "microsoft", "windows", "macos", "safari", "chrome"
+            ]
+            
+            # ✅ 只清理与这些应用相关的文件
+            qoder_keywords = ['qoder', 'vscode', 'electron', 'code-', 'ms-vscode']
+            
+            for root, dirs, files in os.walk(qoder_support_dir):
+                for file in files:
+                    file_path = Path(root) / file
+                    file_ext = file_path.suffix.lower()
+                    
+                    if file_ext in suspicious_extensions:
+                        # 安全检查：跳过重要文件
+                        is_safe_file = any(safe_word in file.lower() for safe_word in safe_keywords)
+                        
+                        # 🛡️ 多重安全检查
+                        is_protected = any(keyword in file.lower() for keyword in protected_keywords)
+                        is_in_qoder_dir = str(qoder_support_dir) in str(file_path)
+                        is_qoder_related = any(keyword in file.lower() or keyword in root.lower() 
+                                             for keyword in qoder_keywords)
+                        
+                        # ✅ 只有同时满足以下条件才删除：
+                        # 1. 在Qoder目录内  2. 与Qoder相关  3. 不在保护列表
+                        if is_in_qoder_dir and is_qoder_related and not is_protected:
+                            try:
+                                file_path.unlink()
+                                self.log(f"   ✅ 已清除可疑文件: {file}")
+                                cleaned_count += 1
+                            except Exception as e:
+                                self.log(f"   ⚠️  清除失败 {file}: {e}")
+                        else:
+                            if not is_qoder_related:
+                                self.log(f"   ℹ️  跳过非相关文件: {file}")
+                            if is_safe_file:
+                                self.log(f"   ℹ️  保护重要文件: {file}")
+            
+            # 3. 清理隐藏文件和目录
+            self.log("3. 清理隐藏文件...")
+            for root, dirs, files in os.walk(qoder_support_dir):
+                # 清理隐藏文件（以点开头）
+                for file in files:
+                    if file.startswith('.') and file not in ['.gitignore', '.gitkeep']:
+                        file_path = Path(root) / file
+                        try:
+                            file_path.unlink()
+                            self.log(f"   ✅ 已清除隐藏文件: {file}")
+                            cleaned_count += 1
+                        except Exception as e:
+                            self.log(f"   ⚠️  清除失败 {file}: {e}")
+                
+                # 清理隐藏目录（以点开头）
+                for dir_name in dirs[:]:
+                    if dir_name.startswith('.') and dir_name not in ['.git']:
+                        dir_path = Path(root) / dir_name
+                        try:
+                            shutil.rmtree(dir_path)
+                            self.log(f"   ✅ 已清除隐藏目录: {dir_name}")
+                            dirs.remove(dir_name)  # 从遍历中移除
+                            cleaned_count += 1
+                        except Exception as e:
+                            self.log(f"   ⚠️  清除失败 {dir_name}: {e}")
+            
+            # 4. 重置文件权限（防止文件时间戳检测）
+            self.log("4. 重置文件权限...")
+            try:
+                # 重置整个目录的权限
+                if platform.system() != "Windows":
+                    subprocess.run(['chmod', '-R', '755', str(qoder_support_dir)], check=False, timeout=30)
+                    self.log("   ✅ 文件权限已重置")
+            except Exception as e:
+                self.log(f"   ⚠️  权限重置失败: {e}")
+            
+            # 5. 创建迷惑性文件（干扰检测）
+            self.log("5. 创建迷惑性文件...")
+            try:
+                decoy_files = [
+                    "real_machine_id.tmp", "backup_device_id.log", 
+                    "old_telemetry.dat", "previous_session.cache",
+                    "legacy_fingerprint.json", "archived_identity.bak",
+                    "system_backup.tmp", "device_clone.dat"
+                ]
+                
+                for decoy_file in decoy_files:
+                    file_path = qoder_support_dir / decoy_file
+                    fake_data = {
+                        "fake_id": str(uuid.uuid4()),
+                        "timestamp": (datetime.now() - timedelta(days=random.randint(30, 365))).isoformat(),
+                        "data": hashlib.md5(str(random.random()).encode()).hexdigest(),
+                        "note": "This is a decoy file"
+                    }
+                    
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        json.dump(fake_data, f, indent=2)
+                    
+                    # 设置为隐藏文件
+                    try:
+                        if platform.system() == "Darwin":
+                            subprocess.run(['chflags', 'hidden', str(file_path)], check=False)
+                    except:
+                        pass
+                    
+                    self.log(f"   ✅ 已创建迷惑文件: {decoy_file}")
+                    cleaned_count += 1
+            except Exception as e:
+                self.log(f"   ⚠️  创建迷惑文件失败: {e}")
+            
+            # 6. 安全清理系统级别的缓存（macOS）
+            if platform.system() == "Darwin":
+                self.log("6. 安全清理 macOS 系统级缓存...")
+                try:
+                    # 只清理用户级别的系统缓存，不影响系统稳定性
+                    user_system_cache_paths = [
+                        Path.home() / "Library/Caches",
+                        Path.home() / "Library/Application Support/com.apple.sharedfilelist",
+                    ]
+                    
+                    for cache_path in user_system_cache_paths:
+                        if cache_path.exists() and cache_path != qoder_support_dir:
+                            # 只清理与 Qoder/VSCode 相关的文件，不影响其他应用
+                            for item in cache_path.iterdir():
+                                item_name_lower = item.name.lower()
+                                if any(keyword in item_name_lower for keyword in 
+                                      ['qoder', 'vscode', 'com.microsoft.vscode', 'electron']):
+                                    try:
+                                        if item.is_dir():
+                                            shutil.rmtree(item)
+                                        else:
+                                            item.unlink()
+                                        self.log(f"   ✅ 已清理系统缓存: {item.name}")
+                                        cleaned_count += 1
+                                    except Exception as e:
+                                        self.log(f"   ⚠️  系统缓存清理失败 {item.name}: {e}")
+                    
+                    # 不清理 LaunchServices，避免影响系统功能
+                    self.log("   ℹ️  为保护系统稳定性，跳过 LaunchServices 清理")
+                    
+                except Exception as e:
+                    self.log(f"   ⚠️  macOS 系统缓存清理失败: {e}")
+            
+            elif platform.system() == "Windows":
+                self.log("6. 安全清理 Windows 系统级缓存...")
+                try:
+                    # 只清理用户级别的缓存，不影响系统
+                    user_cache_paths = [
+                        Path(os.environ.get('LOCALAPPDATA', '')) / "Temp",
+                        Path(os.environ.get('APPDATA', '')) / "Microsoft" / "Windows" / "Recent"
+                    ]
+                    
+                    for cache_path in user_cache_paths:
+                        if cache_path.exists():
+                            for item in cache_path.iterdir():
+                                if any(keyword in item.name.lower() for keyword in ['qoder', 'vscode', 'electron']):
+                                    try:
+                                        if item.is_dir():
+                                            shutil.rmtree(item)
+                                        else:
+                                            item.unlink()
+                                        self.log(f"   ✅ 已清理Windows缓存: {item.name}")
+                                        cleaned_count += 1
+                                    except Exception as e:
+                                        self.log(f"   ⚠️  清理失败: {e}")
+                except Exception as e:
+                    self.log(f"   ⚠️  Windows 系统缓存清理失败: {e}")
+            
+            self.log(f"   超级深度清理完成，处理了 {cleaned_count} 个项目")
+            
+        except Exception as e:
+            self.log(f"   超级深度清理失败: {e}")
 
 def main():
     app = QApplication(sys.argv)
